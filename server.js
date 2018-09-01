@@ -19,7 +19,7 @@ const DEPLOY = 'deploy'
 const LOCAL = 'local'
 const MODE = DEPLOY
 const URL_root = {
-  deploy: 'https://robots-cant-dance.herokuapp.com/',
+  deploy: 'https://robots-cant-dance.herokuapp.com',
   local: 'http://localhost:'
 }
 
