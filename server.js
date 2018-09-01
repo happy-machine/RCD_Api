@@ -22,6 +22,8 @@ const URL_root = {
   deploy: 'https://robots-cant-dance.herokuapp.com/',
   local: 'http://localhost:'
 }
+
+const selectorCalls = ['drew', 'dropped', 'pulled it up and played', 'reloaded the set and dropped', 'smashed', 'selected', 'played', 'wheeled up']
 const URLfactory = (endpoint, ERROR = false, port = CLIENT_PORT, mode = MODE) => {
   if (MODE===DEPLOY){
     if (ERROR) {
@@ -201,7 +203,7 @@ const syncToMaster = ( host, users) => {
         .then( () => checkCurrentTrack(user))
         .then( result => {
           if (result.track_uri !== master.track_uri) {
-            console.log(`${result.selector_name} drew ${result.track_name}!!`)
+            console.log(`${result.selector_name} ${selectorCalls[Math.random * selectorCalls.length]} ${result.track_name}!!`)
             master = result
             allUsers.splice(allUsers.indexOf(user),1)
             resync(allUsers, master)
