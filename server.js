@@ -165,8 +165,8 @@ app.get('/callback', function(req, res) {
         rp(spotify.getUserOptions(host))
         .then((user_details) => {
           host.name = defaultNameCheck(user_details.display_name) 
-          sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X`)
-          sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X`, MAIN_ROOM)
+          sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X...`)
+          sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X...`, MAIN_ROOM)
           pollUsersPlayback() 
           res.redirect(URLfactory('hostLoggedIn'))
         })
@@ -231,9 +231,9 @@ const syncToMaster = ( host, users) => {
         .then( () => checkCurrentTrack(user))
         .then( result => {
           if (result.track_uri !== master.track_uri) {
+            master = result
             sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`, MAIN_ROOM)
             sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`)
-            master = result
             allUsers.splice(allUsers.indexOf(user),1)
             resync(allUsers, master)
             return true
