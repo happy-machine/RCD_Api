@@ -4,7 +4,7 @@ const app = express();
 require('dotenv').config();
 
 const SERVER_PORT = process.env.PORT || 5000;
-const CLIENT_PORT = process.env.CLIENT_PORT || 3000;
+const CLIENT_PORT = 3000;
 
 const _ = require ('lodash')
 const cors = require('cors')
@@ -17,17 +17,24 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const ERROR = 'ERROR'
 const DEPLOY = 'deploy'
 const LOCAL = 'local'
-const MODE = LOCAL
+const MODE = DEPLOY
 const URL_root = {
-  deploy: '',
+  deploy: 'https://robots-cant-dance.herokuapp.com/',
   local: 'http://localhost:'
 }
-
 const URLfactory = (endpoint, ERROR = false, port = CLIENT_PORT, mode = MODE) => {
-  if (ERROR) {
-    return URL_root[mode] + port + '/error?error=' + endpoint
+  if (MODE===DEPLOY){
+    if (ERROR) {
+      return URL_root[mode] + '/error?error=' + endpoint
+    } else {
+      return URL_root[mode] + '/' + endpoint + '/'
+    }
   } else {
-    return URL_root[mode] + port + '/' + endpoint + '/'
+    if (ERROR) {
+      return URL_root[mode] + port + '/error?error=' + endpoint
+    } else {
+      return URL_root[mode] + port + '/' + endpoint + '/'
+    }
   }
 }
 /* 
