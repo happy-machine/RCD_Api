@@ -184,6 +184,7 @@ app.get('/guestcallback', function(req, res) {
         newUser.token = body.access_token
         rp(spotify.getUserOptions(newUser))
         .then( (user_details) => {
+          console.log(`${user_details.name} trying to join.`)
           newUser.name = user_details.display_name
           return checkCurrentTrack(host, master)
         })
@@ -193,6 +194,7 @@ app.get('/guestcallback', function(req, res) {
         })
         .then( () => {
           users = [...users,newUser]
+          sendToBot(`${newUser.name} just joined the party`)
           res.redirect(URLfactory('guestLoggedIn'))
           pollUsersPlayback()
         })
