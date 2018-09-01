@@ -158,7 +158,7 @@ app.get('/callback', function(req, res) {
         .then((user_details) => {
           host.name = user_details.display_name || 'DJ Anonymous'
           sendToBot(`${host.name} just stepped up the 121011.5s`)
-          sendToBot(`${host.name, MAIN_ROOM} just stepped up the 121011.5s`)
+          sendToBot(`${host.name} just stepped up the 121011.5s`, MAIN_ROOM)
           res.redirect(URLfactory('hostLoggedIn'))
         })
         .catch( e => res.redirect(URLfactory('getting_host_options', ERROR)) )
@@ -237,7 +237,7 @@ const syncToMaster = ( host, users) => {
 }
 
 const resync = (allUsers, master) => {
-  sendToBot(`${master.selector_name} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`, MAIN_ROOM
+  sendToBot(`${master.selector_name} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`, MAIN_ROOM)
   sendToBot(`${master.selector_name} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`)
   allUsers.forEach((user =>  
     rp(spotify.setPlaybackOptions(user,master,playbackDelay))
