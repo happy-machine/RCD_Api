@@ -167,6 +167,7 @@ app.get('/callback', function(req, res) {
           host.name = defaultNameCheck(user_details.display_name) 
           sendToBot(`${defaultNameCheck(host.name)} just stepped up onto the 121011.5s`)
           sendToBot(`${defaultNameCheck(host.name)} just stepped up onto the 121011.5s`, MAIN_ROOM)
+          pollUsersPlayback() 
           res.redirect(URLfactory('hostLoggedIn'))
         })
         .catch( e => res.redirect(URLfactory('getting_host_options', ERROR)) )
@@ -208,7 +209,6 @@ app.get('/guestcallback', function(req, res) {
           sendToBot(`${defaultNameCheck(newUser.name)} just joined the party`)
           sendToBot(`${defaultNameCheck(newUser.name)} just joined the party`, MAIN_ROOM)
           res.redirect(URLfactory('guestLoggedIn'))
-          pollUsersPlayback()
         })
         .catch( e =>  {
           console.log('Error in guest sync: ', e)
