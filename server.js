@@ -43,7 +43,7 @@ const URLfactory = (endpoint, ERROR = false, port = CLIENT_PORT, mode = MODE) =>
 /* 
 */
 
-const sendToBot = (token = '645121157:AAFVvaehPv3fkN4mALIysCq27b5Q3gtyIPY', message, chatId = '-1001389216905') => {
+const sendToBot = (message, token = "645121157:AAFVvaehPv3fkN4mALIysCq27b5Q3gtyIPY", chatId = '-1001389216905') => {
   axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
     chat_id: chatId,
     status: 200,
