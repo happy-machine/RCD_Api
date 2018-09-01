@@ -39,8 +39,8 @@ const URLfactory = (endpoint, ERROR = false, port = CLIENT_PORT, mode = MODE) =>
 }
 /* 
 */
-const HOST_REDIRECT_URI = URLfactory('callback', false, 5000)
-const GUEST_REDIRECT_URI =  URLfactory('guestcallback', false, 5000)
+const HOST_REDIRECT_URI = 'https://rcd-api.herokuapp.com/callback/'
+const GUEST_REDIRECT_URI = 'https://rcd-api.herokuapp.com/guestcallback/'
 const PERMISSIONS_SCOPE = 'user-read-currently-playing user-modify-playback-state user-read-playback-state streaming user-read-private';
 const STATE_KEY = 'spotify_auth_state';
 
