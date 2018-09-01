@@ -197,8 +197,8 @@ app.get('/guestcallback', function(req, res) {
         })
         .then( () => {
           users = [...users,newUser]
-          sendToBot(`${newUser.name} just joined the party`)
-          sendToBot(`${newUser.name} just joined the party`, MAIN_ROOM)
+          sendToBot(`${newUser.name || 'one like the Anonymous DJ'} just joined the party`)
+          sendToBot(`${newUser.name || 'one like the Anonymous DJ'} just joined the party`, MAIN_ROOM)
           res.redirect(URLfactory('guestLoggedIn'))
           pollUsersPlayback()
         })
