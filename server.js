@@ -11,6 +11,7 @@ const cors = require('cors')
 // playbackDelay pushes the track 'back'
 const querystring = require('querystring');
 const cookieParser = require('cookie-parser');
+const axios = require ('axios')
 const rp = require('request-promise')
 const CLIENT_ID = process.env.CLIENT_ID; 
 const CLIENT_SECRET = process.env.CLIENT_SECRET; 
@@ -41,6 +42,19 @@ const URLfactory = (endpoint, ERROR = false, port = CLIENT_PORT, mode = MODE) =>
 }
 /* 
 */
+
+const sendToBot = (token = '645121157:AAFVvaehPv3fkN4mALIysCq27b5Q3gtyIPY', message, chatId = '-1001389216905') => {
+  axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+    chat_id: chatId,
+    status: 200,
+    text: message
+  })
+  .catch(err => {
+    console.log('Error :', err)
+    res.end('Error :' + err)
+  })
+}
+
 const HOST_REDIRECT_URI = 'https://rcd-api.herokuapp.com/callback/'
 const GUEST_REDIRECT_URI = 'https://rcd-api.herokuapp.com/guestcallback/'
 const PERMISSIONS_SCOPE = 'user-read-currently-playing user-modify-playback-state user-read-playback-state streaming user-read-private';
@@ -204,6 +218,7 @@ const syncToMaster = ( host, users) => {
         .then( result => {
           if (result.track_uri !== master.track_uri) {
             console.log(`${result.selector_name} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${result.track_name}!!`)
+            sendToBot(`${result.selector_name} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${result.track_name}!!`)
             master = result
             allUsers.splice(allUsers.indexOf(user),1)
             resync(allUsers, master)
