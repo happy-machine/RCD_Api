@@ -218,7 +218,7 @@ const syncToMaster = ( host, users) => {
 const resync = (allUsers, master) => {
   allUsers.forEach((user =>  
     rp(spotify.setPlaybackOptions(user,master,playbackDelay))
-    .then(() => console.log(`Synced ${user} to ${master}`))
+    .then(() => console.log(`...`))
     .catch(e => console.log(e.message))))
 }
 

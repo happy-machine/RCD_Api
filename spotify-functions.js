@@ -27,7 +27,6 @@ module.exports = {
       
     setPlaybackOptions: (user, master, delay = 1) => {
     
-        console.log('setting playback to uri: ', master.track_uri, 'position: ', master.play_position, 'for: ', user.name)
     
     return {
             method: 'PUT',
