@@ -2,10 +2,28 @@
   "name": "rcd_api",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "dependencies": {
+    "ajv": "^6.5.2",
+    "axios": "^0.18.0",
+    "body-parser": "^1.18.3",
+    "connect": "^3.6.6",
+    "cookie-parser": "^1.4.3",
+    "cors": "^2.8.4",
+    "dotenv": "^6.0.0",
+    "express": "^4.16.3",
+    "http": "0.0.0",
+    "loadash": "^1.0.0",
+    "node-fetch": "^2.2.0",
+    "node-fetch-polyfill": "^2.0.6",
+    "nodemon": "^1.18.3",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2",
+    "serve-static": "^1.13.2",
+    "websocket": "^1.0.26"
   },
-  "author": "",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "author": "Happy-Machine",
   "license": "ISC"
 }
