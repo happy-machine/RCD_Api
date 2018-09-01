@@ -69,6 +69,8 @@ const host = {
   name: null
 }
 
+
+
 let users = [];
 // var tokenExpiry = new Date().getTime();
 
@@ -76,7 +78,13 @@ app.use(express.static(__dirname + '/public'))
   .use(cookieParser())
   .use(cors())
 
-
+const defaultNameCheck = (name) => {
+  if (name === null){
+    return 'the one like the DJ Anonymous'
+  } else {
+    return name
+  }
+}
 
 let generateRandomString = function(length) {
   let text = '';
@@ -156,9 +164,9 @@ app.get('/callback', function(req, res) {
         host.token = body.access_token
         rp(spotify.getUserOptions(host))
         .then((user_details) => {
-          host.name = user_details.display_name || 'DJ Anonymous'
-          sendToBot(`${host.name} just stepped up the 121011.5s`)
-          sendToBot(`${host.name} just stepped up the 121011.5s`, MAIN_ROOM)
+          host.name = defaultNameCheck(user_details.display_name) 
+          sendToBot(`${defaultNameCheck(host.name)} just stepped up onto the 121011.5s`)
+          sendToBot(`${defaultNameCheck(host.name)} just stepped up onto the 121011.5s`, MAIN_ROOM)
           res.redirect(URLfactory('hostLoggedIn'))
         })
         .catch( e => res.redirect(URLfactory('getting_host_options', ERROR)) )
@@ -197,8 +205,8 @@ app.get('/guestcallback', function(req, res) {
         })
         .then( () => {
           users = [...users,newUser]
-          sendToBot(`${newUser.name || 'one like the Anonymous DJ'} just joined the party`)
-          sendToBot(`${newUser.name || 'one like the Anonymous DJ'} just joined the party`, MAIN_ROOM)
+          sendToBot(`${defaultNameCheck(newUser.name)} just joined the party`)
+          sendToBot(`${defaultNameCheck(newUser.name)} just joined the party`, MAIN_ROOM)
           res.redirect(URLfactory('guestLoggedIn'))
           pollUsersPlayback()
         })
@@ -237,8 +245,8 @@ const syncToMaster = ( host, users) => {
 }
 
 const resync = (allUsers, master) => {
-  sendToBot(`${master.selector_name} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`, MAIN_ROOM)
-  sendToBot(`${master.selector_name} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`)
+  sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`, MAIN_ROOM)
+  sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`)
   allUsers.forEach((user =>  
     rp(spotify.setPlaybackOptions(user,master,playbackDelay))
     .then(() => console.log(`...`))
