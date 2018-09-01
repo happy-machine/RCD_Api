@@ -155,7 +155,8 @@ app.get('/callback', function(req, res) {
         host.token = body.access_token
         rp(spotify.getUserOptions(host))
         .then((user_details) => {
-          host.name = user_details.display_name
+          host.name = user_details.display_name || 'DJ Anonymous'
+          sendToBot(`${host.name} just stepped up the 121011.5s`)
           res.redirect(URLfactory('hostLoggedIn'))
         })
         .catch( e => res.redirect(URLfactory('getting_host_options', ERROR)) )
