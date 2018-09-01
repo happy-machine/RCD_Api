@@ -231,6 +231,8 @@ const syncToMaster = ( host, users) => {
         .then( () => checkCurrentTrack(user))
         .then( result => {
           if (result.track_uri !== master.track_uri) {
+            sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`, MAIN_ROOM)
+            sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`)
             master = result
             allUsers.splice(allUsers.indexOf(user),1)
             resync(allUsers, master)
@@ -245,8 +247,6 @@ const syncToMaster = ( host, users) => {
 }
 
 const resync = (allUsers, master) => {
-  sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`, MAIN_ROOM)
-  sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`)
   allUsers.forEach((user =>  
     rp(spotify.setPlaybackOptions(user,master,playbackDelay))
     .then(() => console.log(`...`))
