@@ -52,7 +52,7 @@ const host = {
   name: null
 }
 
-const users = [];
+let users = [];
 // var tokenExpiry = new Date().getTime();
 
 app.use(express.static(__dirname + '/public'))
