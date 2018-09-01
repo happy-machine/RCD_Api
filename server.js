@@ -165,8 +165,8 @@ app.get('/callback', function(req, res) {
         rp(spotify.getUserOptions(host))
         .then((user_details) => {
           host.name = defaultNameCheck(user_details.display_name) 
-          sendToBot(`${defaultNameCheck(host.name)} just stepped up onto the 121011.5s`)
-          sendToBot(`${defaultNameCheck(host.name)} just stepped up onto the 121011.5s`, MAIN_ROOM)
+          sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X`)
+          sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X`, MAIN_ROOM)
           pollUsersPlayback() 
           res.redirect(URLfactory('hostLoggedIn'))
         })
