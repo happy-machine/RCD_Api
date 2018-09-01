@@ -2,6 +2,7 @@ const express = require('express');
 var spotify = require('./spotify-functions');
 const app = express();
 require('dotenv').config();
+const MAIN_ROOM = '-1001259716845'
 
 const SERVER_PORT = process.env.PORT || 5000;
 const CLIENT_PORT = 3000;
@@ -43,7 +44,7 @@ const URLfactory = (endpoint, ERROR = false, port = CLIENT_PORT, mode = MODE) =>
 /* 
 */
 
-const sendToBot = (message, token = "645121157:AAFVvaehPv3fkN4mALIysCq27b5Q3gtyIPY", chatId = '-1001389216905') => {
+const sendToBot = (message, chatId = '-1001389216905', token = "645121157:AAFVvaehPv3fkN4mALIysCq27b5Q3gtyIPY") => {
   axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
     chat_id: chatId,
     status: 200,
@@ -157,6 +158,7 @@ app.get('/callback', function(req, res) {
         .then((user_details) => {
           host.name = user_details.display_name || 'DJ Anonymous'
           sendToBot(`${host.name} just stepped up the 121011.5s`)
+          sendToBot(`${host.name, MAIN_ROOM} just stepped up the 121011.5s`)
           res.redirect(URLfactory('hostLoggedIn'))
         })
         .catch( e => res.redirect(URLfactory('getting_host_options', ERROR)) )
@@ -196,6 +198,7 @@ app.get('/guestcallback', function(req, res) {
         .then( () => {
           users = [...users,newUser]
           sendToBot(`${newUser.name} just joined the party`)
+          sendToBot(`${newUser.name} just joined the party`, MAIN_ROOM)
           res.redirect(URLfactory('guestLoggedIn'))
           pollUsersPlayback()
         })
@@ -234,6 +237,7 @@ const syncToMaster = ( host, users) => {
 }
 
 const resync = (allUsers, master) => {
+  sendToBot(`${master.selector_name} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`, MAIN_ROOM
   sendToBot(`${master.selector_name} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`)
   allUsers.forEach((user =>  
     rp(spotify.setPlaybackOptions(user,master,playbackDelay))
