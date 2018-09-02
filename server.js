@@ -1,8 +1,10 @@
 const express = require('express');
 var spotify = require('./spotify-functions');
+const WebSocket = require('ws');
 const app = express();
 require('dotenv').config();
 const MAIN_ROOM = '-1001259716845'
+const wss = new WebSocket.Server({ port: 8080 });
 
 const SERVER_PORT = process.env.PORT || 5000;
 const CLIENT_PORT = 3000;
@@ -24,6 +26,16 @@ const URL_root = {
   deploy: 'https://robots-cant-dance.herokuapp.com',
   local: 'http://localhost:'
 }
+
+wss.on('connection', function connection(ws) {
+  ws.on('message', (message) => {
+    console.log('received: %s', message);
+    ws.send(message);
+  });
+ 
+
+});
+
 
 const selectorCalls = ['drew', 'dropped', 'pulled it up and played', 'reloaded the set and dropped', 'smashed', 'selected', 'played', 'wheeled up']
 const URLfactory = (endpoint, ERROR = false, port = CLIENT_PORT, mode = MODE) => {
