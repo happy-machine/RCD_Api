@@ -1,9 +1,11 @@
 /*jshint esversion: 6 */
 const express = require('express');
 var spotify = require('./spotify-functions');
+const WebSocket = require('ws');
 const app = express();
 require('dotenv').config();
-const MAIN_ROOM = '-1001259716845';
+const MAIN_ROOM = '-1001259716845'
+const wss = new WebSocket.Server({ port: 8080 });
 
 const SERVER_PORT = process.env.PORT || 5000;
 const CLIENT_PORT = 3000;
@@ -26,7 +28,17 @@ const URL_root = {
   local: 'http://localhost:'
 };
 
-const selectorCalls = ['drew', 'dropped', 'pulled it up and played', 'reloaded the set and dropped', 'smashed', 'selected', 'played', 'wheeled up'];
+wss.on('connection', function connection(ws) {
+  ws.on('message', (message) => {
+    console.log('received: %s', message);
+    ws.send(message);
+  });
+ 
+
+});
+
+
+const selectorCalls = ['drew', 'dropped', 'pulled it up and played', 'reloaded the set and dropped', 'smashed', 'selected', 'played', 'wheeled up']
 const URLfactory = (endpoint, ERROR = false, port = CLIENT_PORT, mode = MODE) => {
   if (MODE===DEPLOY){
     if (ERROR) {
@@ -162,11 +174,11 @@ app.get('/callback', function(req, res) {
         host.token = body.access_token;
         rp(spotify.getUserOptions(host))
         .then((user_details) => {
-          host.name = defaultNameCheck(user_details.display_name) ;
-          sendToBot(`${defaultNameCheck(host.name)} just stepped up onto the 121011.5s`);
-          sendToBot(`${defaultNameCheck(host.name)} just stepped up onto the 121011.5s`, MAIN_ROOM);
-          pollUsersPlayback() ;
-          res.redirect(URLfactory('hostLoggedIn'));
+          host.name = defaultNameCheck(user_details.display_name) 
+          sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X...`)
+          sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X...`, MAIN_ROOM)
+          pollUsersPlayback() 
+          res.redirect(URLfactory('hostLoggedIn'))
         })
         .catch( e => res.redirect(URLfactory('getting_host_options', ERROR)));
       } else {
@@ -229,12 +241,12 @@ const syncToMaster = ( host, users) => {
         .then( () => checkCurrentTrack(user))
         .then( result => {
           if (result.track_uri !== master.track_uri) {
-            sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`, MAIN_ROOM);
-            sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`);
-            master = result;
-            allUsers.splice(allUsers.indexOf(user),1);
-            resync(allUsers, master);
-            return true;
+            master = result
+            sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`, MAIN_ROOM)
+            sendToBot(`${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random()*selectorCalls.length)]} ${master.track_name}!!`)
+            allUsers.splice(allUsers.indexOf(user),1)
+            resync(allUsers, master)
+            return true
           } 
         })
         .catch(e => console.log(e.message));
