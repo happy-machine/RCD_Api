@@ -4,7 +4,7 @@ const WebSocket = require('ws');
 const app = express();
 require('dotenv').config();
 const MAIN_ROOM = '-1001259716845'
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new SocketServer({ app });
 
 const SERVER_PORT = process.env.PORT || 5000;
 const CLIENT_PORT = 3000;
