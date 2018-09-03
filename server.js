@@ -1,17 +1,14 @@
-const SERVER_PORT = process.env.PORT || 5000;
-const CLIENT_PORT = 3000;
 
 const express = require('express');
 var spotify = require('./spotify-functions');
 const SocketServer = require('ws').Server;
-const app = express();
-const server = express()
-  .use((req, res) => res.sendFile(INDEX) )
-  .listen(SERVER_PORT, () => console.log(`Listening on ${ SERVER_PORT }`));
+var app = express();
 require('dotenv').config();
 const MAIN_ROOM = '-1001259716845'
-const wss = new SocketServer({ server });
+const wss = new SocketServer({ server:app });
 
+const SERVER_PORT = process.env.PORT || 5000;
+const CLIENT_PORT = 3000;
 
 
 const _ = require ('lodash')
