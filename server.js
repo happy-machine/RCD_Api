@@ -21,7 +21,7 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const ERROR = 'ERROR'
 const DEPLOY = 'deploy'
 const LOCAL = 'local'
-const MODE = DEPLY
+const MODE = DEPLOY
 
 
 const URL_root = {
