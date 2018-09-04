@@ -115,8 +115,8 @@ const sendToBot = (message, chatId = '-1001389216905', token = "645121157:AAFVva
   })
 }
 
-const HOST_REDIRECT_URI = MODE === DEPLOY ? 'https://rcd-api.herokuapp.com/callback?port=' +  SERVER_PORT : `http://localhost:${SERVER_PORT}/callback/`
-const GUEST_REDIRECT_URI =  MODE === DEPLOY ? 'https://rcd-api.herokuapp.com/guestcallback?port=' + SERVER_PORT : `http://localhost:${SERVER_PORT}/guestcallback/`
+const HOST_REDIRECT_URI = MODE === DEPLOY ? 'https://rcd-api.herokuapp.com/callback/' : `http://localhost:${SERVER_PORT}/callback/`
+const GUEST_REDIRECT_URI =  MODE === DEPLOY ? 'https://rcd-api.herokuapp.com/guestcallback/' : `http://localhost:${SERVER_PORT}/guestcallback/`
 const PERMISSIONS_SCOPE = 'user-read-currently-playing user-modify-playback-state user-read-playback-state streaming user-read-private';
 const STATE_KEY = 'spotify_auth_state';
 const playbackDelay = 0
@@ -228,7 +228,7 @@ app.get('/callback', function(req, res) {
             user_object: host,
             master_object: master
           })
-          res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({token: host.token})))
+          res.redirect(URLfactory('hostLoggedIn?' + 'port=' + SERVER_PORT + '&' + querystring.stringify({token: host.token})))
           pollUsersPlayback() 
         })
         .catch( e => {
@@ -276,7 +276,7 @@ app.get('/guestcallback', function(req, res) {
             user_object: newUser,
             master_object: master
           })
-          res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify ({token: newUser.token})))
+          res.redirect(URLfactory('guestLoggedIn?' + 'port=' + SERVER_PORT + '&' + querystring.stringify ({token: newUser.token})))
         })
         .catch( e =>  {
           console.log('Error in guest sync: ', e)
