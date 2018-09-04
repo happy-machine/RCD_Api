@@ -2,7 +2,7 @@
 const express = require('express');
 var spotify = require('./spotify-functions');
 const WebSocket = require('ws');
-// const SocketServer = require('ws').Server;
+const SocketServer = require('ws').Server;
 var app = express();
 require('dotenv').config();
 const MAIN_ROOM = '-1001259716845'
