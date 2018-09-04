@@ -9,7 +9,7 @@ const MAIN_ROOM = '-1001259716845'
 
 const wss = new SocketServer({ server:app });
 
-// const SERVER_PORT = process.env.PORT || 5000;
+const SERVER_PORT = process.env.PORT || 5000;
 const CLIENT_PORT = 3000;
 // const wss = new WebSocket.Server({ port: SERVER_PORT });
 
