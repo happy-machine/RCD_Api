@@ -45,6 +45,7 @@ let message_buffer = JSON.stringify({
 })
 
 wss.on('connection', function connection(ws) {
+  console.log('websocket connected')
   ws.on('message', (message) => {
     const message_rec = JSON.parse(message)
     console.log(message_rec.length && 'send ' + message_rec)
@@ -199,7 +200,7 @@ app.get('/invite', function(req, res) {
 });
 
 app.get('/callback', function(req, res) {
-  console.log('in host callback')
+  console.log('in host callback, server port ', SERVER_PORT)
   const code = req.query.code || null;
   const state = req.query.state || null;
   const storedState = req.cookies ? req.cookies[STATE_KEY] : null;
