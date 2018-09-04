@@ -115,8 +115,8 @@ const sendToBot = (message, chatId = '-1001389216905', token = "645121157:AAFVva
   })
 }
 
-const HOST_REDIRECT_URI = MODE === DEPLOY ? 'https://rcd-api.herokuapp.com/callback/' : `http://localhost:${SERVER_PORT}/callback/`
-const GUEST_REDIRECT_URI =  MODE === DEPLOY ? 'https://rcd-api.herokuapp.com/guestcallback/' : `http://localhost:${SERVER_PORT}/guestcallback/`
+const HOST_REDIRECT_URI = MODE === DEPLOY ? 'https://rcd-api.herokuapp.com/callback?port=' +  SERVER_PORT : `http://localhost:${SERVER_PORT}/callback/`
+const GUEST_REDIRECT_URI =  MODE === DEPLOY ? 'https://rcd-api.herokuapp.com/guestcallback?port=' + SERVER_PORT : `http://localhost:${SERVER_PORT}/guestcallback/`
 const PERMISSIONS_SCOPE = 'user-read-currently-playing user-modify-playback-state user-read-playback-state streaming user-read-private';
 const STATE_KEY = 'spotify_auth_state';
 const playbackDelay = 0
