@@ -1,17 +1,17 @@
 
 const express = require('express');
 var spotify = require('./spotify-functions');
-// const WebSocket = require('ws');
-const SocketServer = require('ws').Server;
+const WebSocket = require('ws');
+// const SocketServer = require('ws').Server;
 var app = express();
 require('dotenv').config();
 const MAIN_ROOM = '-1001259716845'
 
-const wss = new SocketServer({ server:app });
+// const wss = new SocketServer({ server:app });
 
 const SERVER_PORT = process.env.PORT || 5000;
 const CLIENT_PORT = 3000;
-// const wss = new WebSocket.Server({ port: SERVER_PORT });
+const wss = new WebSocket.Server({ port: SERVER_PORT });
 
 const _ = require ('lodash')
 const cors = require('cors')
@@ -228,7 +228,7 @@ app.get('/callback', function(req, res) {
             user_object: host,
             master_object: master
           })
-          res.redirect(URLfactory('hostLoggedIn?' + 'port=' + SERVER_PORT + '&' + querystring.stringify({token: host.token})))
+          res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({token: host.token})))
           pollUsersPlayback() 
         })
         .catch( e => {
@@ -276,7 +276,7 @@ app.get('/guestcallback', function(req, res) {
             user_object: newUser,
             master_object: master
           })
-          res.redirect(URLfactory('guestLoggedIn?' + 'port=' + SERVER_PORT + '&' + querystring.stringify ({token: newUser.token})))
+          res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify ({token: newUser.token})))
         })
         .catch( e =>  {
           console.log('Error in guest sync: ', e)
