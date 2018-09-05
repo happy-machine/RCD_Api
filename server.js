@@ -68,11 +68,14 @@ wss.on('connection', function connection(ws) {
 
     setInterval(
       () => {
-        system_message_buffer && ws.send(system_message_buffer)
-        console.log(message_buffer.length && 'recieve ' + message_buffer)
-        message_buffer && ws.send(message_buffer)
-        message_buffer = ''
-        system_message_buffer = ''
+        wss.clients.forEach((client) => {
+          client.send(new Date().toTimeString());
+        });
+        // system_message_buffer && ws.send(system_message_buffer)
+        // console.log(message_buffer.length && 'recieve ' + message_buffer)
+        // message_buffer && ws.send(message_buffer)
+        // message_buffer = ''
+        // system_message_buffer = ''
      },
       200
     )
