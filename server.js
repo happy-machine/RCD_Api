@@ -7,7 +7,7 @@ var app = express();
 require('dotenv').config();
 const MAIN_ROOM = '-1001259716845'
 
-const wss = new SocketServer({ server:app });
+const wss = new SocketServer({ server:app, port:5001 });
 
 const SERVER_PORT = process.env.PORT || 5000;
 const CLIENT_PORT = 3000;
