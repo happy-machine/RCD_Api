@@ -7,13 +7,9 @@ const SocketServer = require('ws').Server;
 var app = express();
 require('dotenv').config();
 const MAIN_ROOM = '-1001259716845'
-app.use(express.static(__dirname + '/public'))
-  .use(cookieParser())
-  .use(cors())
-var server = http.createServer(app)
+
 const SERVER_PORT = process.env.PORT || 5000;
-const wss = new SocketServer({ server });
-server.listen(port)
+// server.listen(port)
 const CLIENT_PORT = 3000;
 // const wss = new WebSocket.Server({ port: SERVER_PORT });
 
@@ -30,6 +26,11 @@ const ERROR = 'ERROR'
 const DEPLOY = 'deploy'
 const LOCAL = 'local'
 const MODE = DEPLOY
+app.use(express.static(__dirname + '/public'))
+  .use(cookieParser())
+  .use(cors())
+var server = http.createServer(app)
+const wss = new SocketServer({ server });
 
 
 const URL_root = {
