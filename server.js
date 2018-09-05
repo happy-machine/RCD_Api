@@ -29,8 +29,8 @@ const MODE = DEPLOY
 app.use(express.static(__dirname + '/public'))
   .use(cookieParser())
   .use(cors())
-var server = http.createServer(app)
-const wss = new SocketServer({ server });
+// var server = http.createServer(app)
+const wss = new SocketServer({ app });
 
 
 const URL_root = {
