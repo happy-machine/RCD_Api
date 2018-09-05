@@ -1,14 +1,19 @@
 
 const express = require('express');
+var http = require("http")
 var spotify = require('./spotify-functions');
 // const WebSocket = require('ws');
 const SocketServer = require('ws').Server;
 var app = express();
 require('dotenv').config();
 const MAIN_ROOM = '-1001259716845'
-
+app.use(express.static(__dirname + '/public'))
+  .use(cookieParser())
+  .use(cors())
+var server = http.createServer(app)
 const SERVER_PORT = process.env.PORT || 5000;
-const wss = new SocketServer({ server:app, port: SERVER_PORT });
+const wss = new SocketServer({ server });
+server.listen(port)
 const CLIENT_PORT = 3000;
 // const wss = new WebSocket.Server({ port: SERVER_PORT });
 
@@ -127,10 +132,6 @@ const host = {
 }
 
 let users = [];
-
-app.use(express.static(__dirname + '/public'))
-  .use(cookieParser())
-  .use(cors())
 
 const defaultNameCheck = (name) => {
   if (name === null){
