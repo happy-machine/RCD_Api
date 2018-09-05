@@ -13,14 +13,12 @@ const config = {
         deploy: 'https://robots-cant-dance.herokuapp.com',
         local: 'http://localhost:'
     },
-    HOST_REDIRECT_URI:{
-        deploy: 'https://rcd-api.herokuapp.com/callback/',
-        local: 'http://localhost:5000/callback'
-    },
-    GUEST_REDIRECT_URI: 'https://rcd-api.herokuapp.com/guestcallback/',
     PERMISSIONS_SCOPE: 'user-read-currently-playing user-modify-playback-state user-read-playback-state streaming user-read-private',
     STATE_KEY: 'spotify_auth_state',
-    playbackDelay: 0
+    playbackDelay: 0,
+    // telegram chat id
+    CHAT_ID: '-1001389216905',
+    TELEGRAM_TOKEN: '645121157:AAFVvaehPv3fkN4mALIysCq27b5Q3gtyIPY'
 };
 
 module.exports = config;
