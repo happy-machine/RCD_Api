@@ -22,19 +22,22 @@
     "websocket": "^1.0.26",
     "ws": "^6.0.0"
   },
-   "engines": {
-   "node": "6.9.0"
+  "engines": {
+    "node": "6.9.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "nodemon server.js --exec babel-node",
+    "server": "nodemon ./src/server.js --exec babel-node",
     "heroku-postbuild": "npm install",
-    "start": "babel-node server.js"
+    "start": "npm run build && node ./build/server.js"
+    "clean": "rm -rf build && mkdir build",
+    "build-babel": "babel -d ./build ./src -s",
+    "build": "npm run clean && npm run build-babel", 
   },
   "author": "Happy-Machine",
   "license": "ISC",
   "devDependencies": {
-    "babel": "6.23.0",
+    "babel": "^6.23.0",
     "babel-cli": "6.26.0",
     "babel-preset-env": "^1.7.0",
     "nodemon": "^1.18.3"
