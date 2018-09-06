@@ -121,6 +121,7 @@ router.get('/login', function (req, res) {
     spotify-func.func(state, res)
   } else {
     res.redirect(URLfactory('alreadyHosted'));
+    console.log('already hosted')
   }
 });
 // Guest Login
@@ -134,6 +135,7 @@ router.get('/invite', function (req, res) {
     }`);
   } else {
     res.redirect(URLfactory('no_Host_Connected', ERROR));
+    console.log('No Host Connected')
   }
 });
 // Host Callback from spotify
@@ -162,9 +164,11 @@ router.get('/callback', function (req, res) {
           })
           .catch(e => {
             res.redirect(URLfactory('getting_host_options', ERROR));
+            console.log('Getting host options ', e)
           });
       } else {
         res.redirect(URLfactory('spotify_host_auth', ERROR));
+        console.log('Spotify host auth ', e)
       }
     });
   }
@@ -203,9 +207,11 @@ router.get('/guestcallback', function (req, res) {
           })
           .catch(e => {
             res.redirect(URLfactory('guest_sync', ERROR))
+            console.log('Error in guest sync ', e)
           })
       } else {
         res.redirect(URLfactory('guest_callback', ERROR))
+        console.log('Error in guest callback ', e)
       }
     })
   }
@@ -243,7 +249,7 @@ const syncToMaster = (host, users) => {
               })          
             } 
           })
-          .catch(e => console.log(e.message))
+          .catch(e => console.log('Error in sync to master ', e.message))
       })
   } else {
     // console.log('only one user in the room');
@@ -274,7 +280,7 @@ const checkCurrentTrack = (user) => {
       }
       return resolve(master_ref);
     })
-      .catch(e => reject(e.message));
+      .catch(e => reject(`in checkCurrentTrack ${e.message}`));
   });
 };
 
