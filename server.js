@@ -277,7 +277,7 @@ router.get('/guestcallback', function (req, res) {
           })
           .then((obj) => {
             master = obj;
-            return rp(spotify.setPlaybackOptions(newUser, master, playbackDelay));
+            return rp(spotify.setPlaybackOptions(newUser, master, config.playbackDelay));
           })
           .then(() => {
             users = [...users, newUser];
@@ -291,10 +291,10 @@ router.get('/guestcallback', function (req, res) {
           })
           .catch(e => {
             console.log('Error in guest sync: ', e)
-            res.redirect(URLfactory('guest_sync', ERROR))
+            res.redirect(URLfactory('guest_sync', config.ERROR))
           })
       } else {
-        res.redirect(URLfactory('guest_callback', ERROR))
+        res.redirect(URLfactory('guest_callback', config.ERROR))
       }
     })
   }
@@ -333,7 +333,7 @@ const syncToMaster = (host, users) => {
 
 const resync = (allUsers, master) => {
   allUsers.forEach((user =>
-    rp(spotify.setPlaybackOptions(user, master, playbackDelay))
+    rp(spotify.setPlaybackOptions(user, master, config.playbackDelay))
       .then(() => console.log(`...`))
       .catch(e => console.log(e.message))));
 }
