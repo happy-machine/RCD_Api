@@ -29,8 +29,8 @@
     "heroku-postbuild": "npm install",
     "start": "npm run build && node ./build/server.js",
     "clean": "rm -rf build && mkdir build",
-    "build-babel": "babel-cli -d ./build ./src -s",
-    "build": "babel app/*.js -d dist"
+    "build-babel": "babel -d ./build ./src -s",
+    "build": "npm run clean && npm run build-babel"
   },
   "author": "Happy-Machine",
   "license": "ISC",
