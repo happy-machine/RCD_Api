@@ -51,7 +51,7 @@ let master = {
   selector_token: null,
   album_cover: null,
 };
-const host = {token: null,name: null};
+const host = { token: null, name: null };
 let users = [];
 let system_message_buffer = JSON.stringify({
   type: '',
@@ -72,7 +72,7 @@ const getCurrentUser = (token) => {
   let allUsers = [...users, host];
   let user_to_return;
   allUsers.forEach(user => {
-    if (user.token == token) {
+    if (user.token === token) {
       user_to_return = user;
     }
   });
@@ -157,20 +157,20 @@ router.get('/guestcallback', function (req, res) {
         let newUser = {};
         newUser.token = body.access_token;
         RP(spotify.getUserOptions(newUser))
-          .then((user_details) => {
+          .then( user_details => {
             console.log(`${user_details.name} trying to join.`);
             newUser.name = user_details.display_name;
 
             return checkCurrentTrack(host, master);
           })
-          .then((obj) => {
+          .then( obj => {
             master = obj;
             // after current track in master state is checked set playback for current user
             return RP(spotify.setPlaybackOptions(newUser, master, config.PLAYBACK_DELAY));
           })
-          .then(() => {
-            users = [...users, newUser];
+          .then( () => {
             // add new user to global user array
+            users = [...users, newUser];
             system_message_buffer = makeBuffer( `${defaultNameCheck(newUser.name)} joined the party...`, newUser, master, 'connection')
             res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token })))
           })
@@ -254,13 +254,11 @@ const checkCurrentTrack = (user) => {
 };
 
 // START SERVER AND SOCKET
-// CONNECT TO WEBSOCKET THROUGH wss://<app-name>.herokuapp.com:443/socket
 const app = express()
 .use('/', router)
 .listen(config.SERVER_PORT, () => console.log(`Listening on ${config.SERVER_PORT }`));
 
-
-// websockets
+// CONNECT TO WEBSOCKET THROUGH wss://<app-name>.herokuapp.com:443/socket
 const startWebsocket = () => {
   wss = new SocketServer({ server: app , path: "/socket"});
 }
