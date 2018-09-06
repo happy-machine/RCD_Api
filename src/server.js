@@ -6,7 +6,7 @@ import express from 'express';
 import querystring from 'querystring';
 const SocketServer = require('ws').Server;
 const RP = require('request-promise');
-const spotify = require('./utils/spotify-func');
+const spotify = require('./utils/spotify_func');
 const config = require('./utils/config');
 const urls = require('./utils/urls');
 
@@ -85,7 +85,7 @@ router.get('/login', function (req, res) {
   res.cookie(config.STATE_KEY, state);
   if (!host.token) {
     res.redirect(`https://accounts.spotify.com/authorize?' 
-      ${querystring.stringify(spotify-func.spotify_options(urls.HOST_REDIRECT_URI[MODE], state))
+      ${querystring.stringify(spotify_func.spotify_options(urls.HOST_REDIRECT_URI[MODE], state))
     }`)
   } else {
     res.redirect(URLfactory('alreadyHosted'));
@@ -98,7 +98,7 @@ router.get('/invite', function (req, res) {
   res.cookie(config.STATE_KEY, state);
   if (host.token) {
     res.redirect(`https://accounts.spotify.com/authorize?
-    ${querystring.stringify(spotify-func.spotify_options(urls.GUEST_REDIRECT_URI[MODE], state))
+    ${querystring.stringify(spotify_func.spotify_options(urls.GUEST_REDIRECT_URI[MODE], state))
     }`);
   } else {
     res.redirect(URLfactory('no_Host_Connected', ERROR));
