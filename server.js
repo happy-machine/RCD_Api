@@ -335,18 +335,37 @@ const app = express()
 
 const startWebsocket = () => {
   wss = new SocketServer({ server: app , path: "/socket"});
-  wss.on('connection', (ws) => {
-    console.log('Client connected');
-    ws.on('close', () => console.log('Client disconnected'));
-  });
-  setInterval(() => {
-    console.log('sending to ', wss)
-    wss.clients.forEach((client) => {
-      client.send(new Date().toTimeString());
+  wss.on('connection', function connection(ws) {
+    console.log('websocket connected')
+    ws.on('message', (message) => {
+      const message_rec = JSON.parse(message)
+      console.log(message_rec.length && 'send ' + message_rec)
+      switch (message_rec.type){
+        case 'message': message_buffer = JSON.stringify({
+          type: 'message',
+          user_object: getCurrentUser(message_rec.token) || 'DJ Unknown',
+          master_object: master,
+          message: message_rec.message
+        })
+        default: break;
+      }
+  
+      setInterval(
+        () => {
+         wss.clients.forEach((client) => {
+            system_message_buffer && ws.send(system_message_buffer)
+            console.log(message_buffer.length && 'recieve ' + message_buffer)
+            message_buffer && ws.send(message_buffer)
+            message_buffer = ''
+            system_message_buffer = ''
+            client.send(new Date().toTimeString());
+          });}
+       ,
+        200
+      )
     });
-  }, 1000);
+  });
 }
-
 
 
 
