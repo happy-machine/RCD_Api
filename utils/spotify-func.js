@@ -1,5 +1,6 @@
 /*jshint esversion: 6 */
 require('dotenv').config();
+const config = require('./config');
 const CLIENT_ID = process.env.CLIENT_ID; 
 const CLIENT_SECRET = process.env.CLIENT_SECRET; 
 
@@ -25,9 +26,7 @@ module.exports = {
         }
     },
       
-    setPlaybackOptions: (user, master, delay = 1) => {
-    
-    
+    setPlaybackOptions: (user, master, delay = 1) => {  
     return {
             method: 'PUT',
             uri: 'https://api.spotify.com/v1/me/player/play',
@@ -65,6 +64,20 @@ module.exports = {
             },
             json: true 
         }
-    }
-      
+    },
+    spotifyOptions: {
+        response_type: 'code',
+        client_id: config.CLIENT_ID,
+        scope: config.PERMISSIONS_SCOPE,
+        redirect_uri: config.HOST_REDIRECT_URI,
+      }  
 };
+/* 
+res.redirect('https://accounts.spotify.com/authorize?' +
+querystring.stringify({
+response_type: 'code',
+client_id: config.CLIENT_ID,
+scope: config.PERMISSIONS_SCOPE,
+redirect_uri: congif.HOST_REDIRECT_URI,
+state: state
+})); */
