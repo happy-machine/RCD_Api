@@ -27,7 +27,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "nodemon server.js --exec babel-node", //for spinning up dev server which updates using Nodemon
+    "server": "nodemon server.js --exec babel-node",
     "heroku-postbuild": "npm install"
     "start": "babel-node server.js"
   },
