@@ -35,6 +35,9 @@ express().use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   next();
 });
+const app = express()
+.use('/', router)
+.use(cookieParser())
 
 
 
@@ -327,10 +330,8 @@ const checkCurrentTrack = (user) => {
 
 // START SERVER AND SOCKET
 // CONNECT TO WEBSOCKET THROUGH wss://<app-name>.herokuapp.com:443/socket
-const app = express()
-.use('/', router)
-.use(cookieParser())
-.listen(config.SERVER_PORT, () => console.log(`Listening on ${ config.SERVER_PORT }`));
+
+app.listen(config.SERVER_PORT, () => console.log(`Listening on ${ config.SERVER_PORT }`));
 const wss = new SocketServer({ server: app , path: "/socket"});
 
 wss.on('connection', (ws) => {
