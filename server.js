@@ -145,8 +145,8 @@ const pollWebsocket = () => {
   wss.on('connection', function connection(ws) {
     console.log('websocket connected')
     ws.on('message', (message) => {
-      console.log('recieved: ' + message_rec)
-      console.log('rec stringified', JSON.stringify(message_rec))
+      console.log('recieved: ' + message)
+      console.log('rec stringified', JSON.stringify(message))
       const message_rec = JSON.parse(message)
       switch (message_rec.type){
         case 'message': message_buffer = JSON.stringify({
