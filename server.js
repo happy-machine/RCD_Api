@@ -319,11 +319,11 @@ const syncToMaster = (host, users) => {
             if (result.track_uri !== master.track_uri) {
               master = result
               console.log('about to get album')
-              return rp(spotify.getAlbum(user, master.track_uri.split('track:')[1]))
+              return rp(spotify.getTrack(user, master.track_uri.split('track:')[1]))
             }
-          }).then((album)=>{
+          }).then((track)=>{
             console.log('got album')
-            master.album_cover = album.images[0].url
+            master = [...master, track.album.images[0].url]
             system_message_buffer = JSON.stringify({
               type: 'track_change',
               message: `${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random() * selectorCalls.length)]} ${master.track_name}!!`,

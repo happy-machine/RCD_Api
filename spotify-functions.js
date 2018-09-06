@@ -55,8 +55,8 @@ module.exports = {
         }
     },
 
-    getAlbum: (user, track_uri) => {
-        console.log('getting album')
+    getTrack: (user, track_uri) => {
+        console.log('getting track')
         return {
             uri: 'https://api.spotify.com/v1/tracks/' + track_uri,
             headers: { 
