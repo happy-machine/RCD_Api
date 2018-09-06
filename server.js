@@ -8,6 +8,12 @@ const express = require('express');
 var spotify = require('./spotify-functions');
 const SocketServer = require('ws').Server;
 const router = express.Router();
+require('dotenv').config();
+const _ = require('lodash');
+const querystring = require('querystring');
+const cookieParser = require('cookie-parser');
+const axios = require('axios');
+const rp = require('request-promise');
 // Cross Domain Origin Setup
 var allowCrossDomain = function (req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
@@ -30,13 +36,7 @@ express().use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   next();
 });
-require('dotenv').config();
-const _ = require('lodash');
-const cors = require('cors');
-const querystring = require('querystring');
-const cookieParser = require('cookie-parser');
-const axios = require('axios');
-const rp = require('request-promise');
+
 
 
 
