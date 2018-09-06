@@ -317,7 +317,7 @@ const syncToMaster = (host, users) => {
           .then(() => checkCurrentTrack(user))
           .then(result => {
             if (result.track_uri !== master.track_uri) {
-              return rp(spotify.getAlbum(user, master.track_uri)).then((album)=>{
+              rp(spotify.getAlbum(user, master.track_uri)).then((album)=>{
                 master = result
                 master.album_cover = album.images[0].url
                 system_message_buffer = JSON.stringify({
