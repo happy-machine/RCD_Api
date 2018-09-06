@@ -164,9 +164,10 @@ const pollWebsocket = () => {
           system_message_buffer && client.send(system_message_buffer)
           console.log(message_buffer.length && 'send ' + message_buffer)
           message_buffer && client.send(message_buffer)
-          message_buffer = ''
-          system_message_buffer = ''
-        });}
+        });
+        message_buffer = ''
+        system_message_buffer = ''
+      }
      ,
       200
     )
