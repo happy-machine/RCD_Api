@@ -160,7 +160,7 @@ router.get('/guestcallback', function (req, res) {
           .then((user_details) => {
             console.log(`${user_details.name} trying to join.`);
             newUser.name = user_details.display_name;
-            pollWebsocket() // Start the websocket polling (does this need to happen again?)
+
             return checkCurrentTrack(host, master);
           })
           .then((obj) => {
