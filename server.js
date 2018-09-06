@@ -138,6 +138,7 @@ let master = {
 };
 
 router.get('/login', function (req, res) {
+  console.log('in login')
   const state = generateRandomString(16);
   res.cookie(config.STATE_KEY, state);
   if (!host.token) {
@@ -155,6 +156,7 @@ router.get('/login', function (req, res) {
 });
 
 router.get('/invite', function (req, res) {
+  console.log('in invite')
   const state = generateRandomString(16);
   res.cookie(config.STATE_KEY, state);
   if (host.token) {
@@ -176,6 +178,7 @@ router.get('/callback', function (req, res) {
   const code = req.query.code || null;
   const state = req.query.state || null;
   const storedState = req.cookies ? req.cookies[config.STATE_KEY] : null;
+  console.log('STATE: ', state, 'STORED STATE: ', storedState)
   if (state === null || state !== storedState) {
     res.redirect('/#' +
       querystring.stringify({
