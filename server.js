@@ -134,7 +134,8 @@ let master = {
   artist_name: null,
   play_position: null,
   selector_name: null,
-  selector_token: null
+  selector_token: null,
+  album_cover: null,
 };
 
 const startWebsocket = () => {
@@ -322,7 +323,7 @@ const syncToMaster = (host, users) => {
               return rp(spotify.getTrack(user, master.track_uri.split('track:')[1]))
               .then((track)=>{
                 console.log('got album')
-                master = [...master, track.album.images[0].url]
+                master = {...master, album_cover: track.album.images[0].url}
                 system_message_buffer = JSON.stringify({
                   type: 'track_change',
                   message: `${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random() * selectorCalls.length)]} ${master.track_name}!!`,
