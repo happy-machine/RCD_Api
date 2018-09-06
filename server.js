@@ -35,7 +35,7 @@ express().use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   next();
 });
-express().use(cookieParser())
+// express().use(cookieParser())
 
 
 
@@ -174,11 +174,10 @@ router.get('/invite', function (req, res) {
 });
 
 router.get('/callback', function (req, res) {
-  console.log('in host callback and req.cookies: ', req.cookies);
-  console.log('req.headers.cookies. ', req.headers.cookie.split(`${config.STATE_KEY}=`)[1])
+  console.log('in host callback');
   const code = req.query.code || null;
   const state = req.query.state || null;
-  const storedState = req.cookies ? req.cookies[config.STATE_KEY] : null;
+  const storedState = req.headers.cookie ? req.headers.cookie.split(`${config.STATE_KEY}=`)[1] : null;
   console.log('STATE: ', state, 'STORED STATE: ', storedState)
   if (state === null || state !== storedState) {
     res.redirect('/#' +
@@ -219,7 +218,7 @@ router.get('/callback', function (req, res) {
 router.get('/guestcallback', function (req, res) {
   const code = req.query.code || null;
   const state = req.query.state || null;
-  const storedState = req.cookies ? req.cookies[config.STATE_KEY] : null;
+  const storedState = req.headers.cookie ? req.headers.cookie.split(`${config.STATE_KEY}=`)[1] : null;
   if (state === null || state !== storedState) {
     res.redirect('/#' +
       querystring.stringify({
