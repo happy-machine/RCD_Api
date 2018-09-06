@@ -175,7 +175,7 @@ router.get('/invite', function (req, res) {
 
 router.get('/callback', function (req, res) {
   console.log('in host callback and req.cookies: ', req.cookies);
-  console.log('req.headers.cookies. ', req.headers.cookie[config.STATE_KEY])
+  console.log('req.headers.cookies. ', req.headers.cookie.split(`${config.STATE_KEY}=`)[1])
   const code = req.query.code || null;
   const state = req.query.state || null;
   const storedState = req.cookies ? req.cookies[config.STATE_KEY] : null;
