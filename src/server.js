@@ -1,18 +1,18 @@
 /*jshint esversion: 6 */
 // SETTINGS
-const config = require('./utils/config');
-
 // DEPENDANCIES
 require('dotenv').config();
-const express = require('express');
-const spotify = require('./utils/spotify-func');
+import express from 'express';
+import querystring from 'querystring';
 const SocketServer = require('ws').Server;
 const RP = require('request-promise');
-const querystring = require('querystring')
+const spotify = require('./utils/spotify-func');
+const config = require('./utils/config');
+const urls = require('./utils/urls');
 
 // IMPORTS
 import {URLfactory, defaultNameCheck, generateRandomString, wait_promise, queryStringError} from './utils/tools'
-import {SELECTOR_CALLS, ERROR} from './utils/constants'
+import {SELECTOR_CALLS, ERROR, MODE} from './utils/constants'
 
 const router = express.Router();
 
@@ -37,8 +37,6 @@ express().use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   next();
 });
-express().use(cookieParser())
-
 
 // Global state
 let wss
@@ -87,7 +85,7 @@ router.get('/login', function (req, res) {
   res.cookie(config.STATE_KEY, state);
   if (!host.token) {
     res.redirect(`https://accounts.spotify.com/authorize?' 
-      ${querystring.stringify(spotify-func.spotify_options(config.HOST_REDIRECT_URI, state))
+      ${querystring.stringify(spotify-func.spotify_options(urls.HOST_REDIRECT_URI[MODE], state))
     }`)
   } else {
     res.redirect(URLfactory('alreadyHosted'));
@@ -100,7 +98,7 @@ router.get('/invite', function (req, res) {
   res.cookie(config.STATE_KEY, state);
   if (host.token) {
     res.redirect(`https://accounts.spotify.com/authorize?
-    ${querystring.stringify(spotify-func.spotify_options(config.GUEST_REDIRECT_URI, state))
+    ${querystring.stringify(spotify-func.spotify_options(urls.GUEST_REDIRECT_URI[MODE], state))
     }`);
   } else {
     res.redirect(URLfactory('no_Host_Connected', ERROR));
@@ -201,7 +199,7 @@ const syncToMaster = (host, users) => {
               master = result
               return RP(spotify.getTrack(user, master.track_uri.split('track:')[1]))
               .then((track)=>{
-                master = {...master, album_cover: track.album.images[0].url}
+                master.album_cover = track.album.images[0].url
                 /* get the new tracks cover image and set the master to the new track that is taking over
                 then set the system message buffer to send update info to the client */
                 system_message_buffer = makeBuffer(

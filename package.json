@@ -27,7 +27,7 @@
   },
   "scripts": {
     "heroku-postbuild": "npm install",
-    "start": "node ./dist/server.js",
+    "start": "npm run build && node ./build/server.js",
     "clean": "rm -rf build && mkdir build",
     "build-babel": "babel-cli -d ./build ./src -s",
     "build": "babel app/*.js -d dist"
