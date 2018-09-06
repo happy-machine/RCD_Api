@@ -8,7 +8,7 @@ const config = {
     LOCAL: 'local',
     SERVER_PORT: process.env.PORT || 5000,
     CLIENT_PORT: 3000,
-    MODE: 'local',
+    MODE: 'deploy',
     URL_ROOT: {
         deploy: 'https://robots-cant-dance.herokuapp.com',
         local: 'http://localhost:'

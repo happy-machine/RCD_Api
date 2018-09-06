@@ -318,9 +318,9 @@ const syncToMaster = (host, users) => {
           .then(result => {
             if (result.track_uri !== master.track_uri) {
               master = result
-              console.log('about to get album')
+              console.log('about to get album', master.track_uri.split('track:')[1])
               return rp(spotify.getTrack(user, master.track_uri.split('track:')[1]))
-            }
+            } else return false
           }).then((track)=>{
             console.log('got album')
             master = [...master, track.album.images[0].url]
