@@ -115,7 +115,7 @@ router.get('/callback', function (req, res) {
   } else {
     res.clearCookie(config.STATE_KEY);
 
-    RP.post(spotify.authOptions(config.HOST_REDIRECT_URI, code), function (error, response, body) {
+    RP.post(spotify.authOptions(urls.HOST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
       if (!error && response.statusCode === 200) {
         host.token = body.access_token;
         /* get user details and start websockets. Send greeting and token to client then start
@@ -150,7 +150,7 @@ router.get('/guestcallback', function (req, res) {
   } else {
     res.clearCookie(config.STATE_KEY);
 
-    RP.post(spotify.authOptions(config.GUEST_REDIRECT_URI, code), function (error, response, body) {
+    RP.post(spotify.authOptions(urls.GUEST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
       if (!error && response.statusCode === 200) {
         let newUser = {};
         newUser.token = body.access_token;

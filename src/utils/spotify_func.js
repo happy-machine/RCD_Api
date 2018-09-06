@@ -37,14 +37,13 @@ module.exports = {
         }
     },
       
-    authOptions: (redirect_uri, state) => {
+    authOptions: (redirect_uri, code) => {
         return {
             url: 'https://accounts.spotify.com/api/token',
             form: {
             code: code,
             redirect_uri: redirect_uri,
             grant_type: 'authorization_code',
-            state
             },
             headers: {
             'Authorization': 'Basic ' + (new Buffer(config.CLIENT_ID + ':' + config.CLIENT_SECRET).toString('base64'))
