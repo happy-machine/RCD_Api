@@ -26,5 +26,8 @@
     "start": "nodemon server.js"
   },
   "author": "Happy-Machine",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "babel-preset-env": "^1.7.0"
+  }
 }
