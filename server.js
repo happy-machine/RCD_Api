@@ -137,6 +137,40 @@ let master = {
   selector_token: null
 };
 
+const startWebsocket = () => {
+  wss = new SocketServer({ server: app , path: "/socket"});
+  wss.on('connection', function connection(ws) {
+    console.log('websocket connected')
+    ws.on('message', (message) => {
+      const message_rec = JSON.parse(message)
+      console.log(message_rec.length && 'send ' + message_rec)
+      switch (message_rec.type){
+        case 'message': message_buffer = JSON.stringify({
+          type: 'message',
+          user_object: getCurrentUser(message_rec.token) || 'DJ Unknown',
+          master_object: master,
+          message: message_rec.message
+        })
+        default: break;
+      }
+  
+      setInterval(
+        () => {
+          console.log('.')
+         wss.clients.forEach((client) => {
+            system_message_buffer && ws.send(system_message_buffer)
+            console.log(message_buffer.length && 'recieve ' + message_buffer)
+            message_buffer && client.send(message_buffer)
+            message_buffer = ''
+            system_message_buffer = ''
+          });}
+       ,
+        200
+      )
+    });
+  });
+}
+
 router.get('/login', function (req, res) {
   console.log('in login')
   const state = generateRandomString(16);
@@ -333,39 +367,7 @@ const app = express()
 .use('/', router)
 .listen(config.SERVER_PORT, () => console.log(`Listening on ${ config.SERVER_PORT }`));
 
-const startWebsocket = () => {
-  wss = new SocketServer({ server: app , path: "/socket"});
-  wss.on('connection', function connection(ws) {
-    console.log('websocket connected')
-    ws.on('message', (message) => {
-      const message_rec = JSON.parse(message)
-      console.log(message_rec.length && 'send ' + message_rec)
-      switch (message_rec.type){
-        case 'message': message_buffer = JSON.stringify({
-          type: 'message',
-          user_object: getCurrentUser(message_rec.token) || 'DJ Unknown',
-          master_object: master,
-          message: message_rec.message
-        })
-        default: break;
-      }
-  
-      setInterval(
-        () => {
-          console.log('.')
-         wss.clients.forEach((client) => {
-            system_message_buffer && ws.send(system_message_buffer)
-            console.log(message_buffer.length && 'recieve ' + message_buffer)
-            message_buffer && client.send(message_buffer)
-            message_buffer = ''
-            system_message_buffer = ''
-          });}
-       ,
-        200
-      )
-    });
-  });
-}
+
 
 
 
