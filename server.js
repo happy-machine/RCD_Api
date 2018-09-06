@@ -37,7 +37,7 @@ express().use(function (req, res, next) {
 });
 express().use(cookieParser())
 
-
+let wss
 
 let system_message_buffer = JSON.stringify({
   type: '',
@@ -194,11 +194,7 @@ router.get('/callback', function (req, res) {
         host.token = body.access_token;
         rp(spotify.getUserOptions(host))
           .then((user_details) => {
-            const wss = new SocketServer({ server: app , path: "/socket"});
-            wss.on('connection', (ws) => {
-              console.log('Client connected');
-              ws.on('close', () => console.log('Client disconnected'));
-            });
+            startWebsocket()
             host.name = defaultNameCheck(user_details.display_name)
             // sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X...`)
             // sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X...`, MAIN_ROOM)
@@ -337,13 +333,18 @@ const app = express()
 .use('/', router)
 .listen(config.SERVER_PORT, () => console.log(`Listening on ${ config.SERVER_PORT }`));
 
-
-  setInterval((wss) => {
-    console.log(wss)
-    wss && wss.clients.forEach((client) => {
-      client.send(new Date().toTimeString());
-    });
-  }, 1000);
+const startWebsocket = () => {
+  wss = new SocketServer({ server: app , path: "/socket"});
+  wss.on('connection', (ws) => {
+    console.log('Client connected');
+    ws.on('close', () => console.log('Client disconnected'));
+  });
+}
+setInterval(() => {
+  wss && wss.clients.forEach((client) => {
+    client.send(new Date().toTimeString());
+  });
+}, 1000);
 
 
 
