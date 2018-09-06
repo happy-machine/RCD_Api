@@ -63,10 +63,13 @@ module.exports = {
             json: true 
         }
     },
-    spotifyOptions: {
-        response_type: 'code',
-        client_id: config.CLIENT_ID,
-        scope: config.PERMISSIONS_SCOPE,
-        redirect_uri: config.HOST_REDIRECT_URI,
+    spotifyOptions: (uri, state) => {
+        return {
+            response_type: 'code',
+            client_id: config.CLIENT_ID,
+            scope: config.PERMISSIONS_SCOPE,
+            redirect_uri: uri,
+            state
+        }
       } ,
 };
