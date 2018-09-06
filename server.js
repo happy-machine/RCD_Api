@@ -318,7 +318,7 @@ const syncToMaster = (host, users) => {
           .then(result => {
             if (result.track_uri !== master.track_uri) {
               console.log('about to get album')
-              return rp(spotify.getAlbum(user, master.track_uri))
+              return rp(spotify.getAlbum(user, master.track_uri.split('track:')[1]))
             }
           }).then((album)=>{
             console.log('got album')
@@ -344,7 +344,6 @@ const syncToMaster = (host, users) => {
 const resync = (allUsers, master) => {
   allUsers.forEach((user =>
     rp(spotify.setPlaybackOptions(user, master, config.playbackDelay))
-      .then(() => console.log(`...`))
       .catch(e => console.log(e.message))));
 }
 
