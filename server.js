@@ -199,7 +199,6 @@ router.get('/callback', function (req, res) {
               console.log('Client connected');
               ws.on('close', () => console.log('Client disconnected'));
             });
-            poll(wss)
             host.name = defaultNameCheck(user_details.display_name)
             // sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X...`)
             // sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X...`, MAIN_ROOM)
@@ -338,13 +337,14 @@ const app = express()
 .use('/', router)
 .listen(config.SERVER_PORT, () => console.log(`Listening on ${ config.SERVER_PORT }`));
 
-const poll = (wss) => {
+
   setInterval((wss) => {
+    console.log('wss')
     wss && wss.clients.forEach((client) => {
       client.send(new Date().toTimeString());
     });
   }, 1000);
-}
+
 
 
 
