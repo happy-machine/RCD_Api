@@ -28,7 +28,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "server": "nodemon server.js --exec babel-node",
-    "heroku-postbuild": "npm install"
+    "heroku-postbuild": "npm install",
     "start": "babel-node server.js"
   },
   "author": "Happy-Machine",
