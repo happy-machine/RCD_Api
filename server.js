@@ -272,6 +272,7 @@ router.get('/guestcallback', function (req, res) {
           .then((user_details) => {
             console.log(`${user_details.name} trying to join.`);
             newUser.name = user_details.display_name;
+            startWebsocket()
             return checkCurrentTrack(host, master);
           })
           .then((obj) => {
