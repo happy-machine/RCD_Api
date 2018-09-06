@@ -318,21 +318,22 @@ const syncToMaster = (host, users) => {
           .then(result => {
             if (result.track_uri !== master.track_uri) {
               master = result
-              console.log('about to get album', master.track_uri.split('track:')[1])
+              console.log('about to get album', master, master.track_uri, master.track_uri.split('track:')[1])
               return rp(spotify.getTrack(user, master.track_uri.split('track:')[1]))
-            } else return false
-          }).then((track)=>{
-            console.log('got album')
-            master = [...master, track.album.images[0].url]
-            system_message_buffer = JSON.stringify({
-              type: 'track_change',
-              message: `${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random() * selectorCalls.length)]} ${master.track_name}!!`,
-              user_object: user,
-              master_object: master
-            })
-            allUsers.splice(allUsers.indexOf(user), 1)
-            resync(allUsers, master)
-            return true
+              .then((track)=>{
+                console.log('got album')
+                master = [...master, track.album.images[0].url]
+                system_message_buffer = JSON.stringify({
+                  type: 'track_change',
+                  message: `${defaultNameCheck(master.selector_name)} ${selectorCalls[Math.floor(Math.random() * selectorCalls.length)]} ${master.track_name}!!`,
+                  user_object: user,
+                  master_object: master
+                })
+                allUsers.splice(allUsers.indexOf(user), 1)
+                resync(allUsers, master)
+                return true
+              })          
+            } 
           })
           .catch(e => console.log(e.message))
       })
