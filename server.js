@@ -339,7 +339,7 @@ const app = express()
 
 
   setInterval((wss) => {
-    console.log('wss')
+    console.log(wss)
     wss && wss.clients.forEach((client) => {
       client.send(new Date().toTimeString());
     });
