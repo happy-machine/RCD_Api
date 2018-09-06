@@ -143,7 +143,7 @@ const startWebsocket = () => {
     console.log('websocket connected')
     ws.on('message', (message) => {
       const message_rec = JSON.parse(message)
-      console.log(message_rec.length && 'send ' + message_rec)
+      console.log(message_rec && 'recieved: ' + message_rec)
       switch (message_rec.type){
         case 'message': message_buffer = JSON.stringify({
           type: 'message',
@@ -157,7 +157,6 @@ const startWebsocket = () => {
       
     setInterval(
       () => {
-        console.log('.')
        wss.clients.forEach((client) => {
           system_message_buffer && client.send(system_message_buffer)
           console.log(message_buffer.length && 'recieve ' + message_buffer)
