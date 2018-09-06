@@ -139,6 +139,9 @@ let master = {
 
 const startWebsocket = () => {
   wss = new SocketServer({ server: app , path: "/socket"});
+}
+
+const pollWebsocket = () => {
   wss.on('connection', function connection(ws) {
     console.log('websocket connected')
     ws.on('message', (message) => {
@@ -169,6 +172,7 @@ const startWebsocket = () => {
     )
   });
 }
+
 
 router.get('/login', function (req, res) {
   console.log('in login')
@@ -228,6 +232,7 @@ router.get('/callback', function (req, res) {
         rp(spotify.getUserOptions(host))
           .then((user_details) => {
             startWebsocket()
+            pollWebsocket()
             host.name = defaultNameCheck(user_details.display_name)
             // sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X...`)
             // sendToBot(`${defaultNameCheck(host.name)} just stepped up to the 1210-X...`, MAIN_ROOM)
@@ -272,7 +277,7 @@ router.get('/guestcallback', function (req, res) {
           .then((user_details) => {
             console.log(`${user_details.name} trying to join.`);
             newUser.name = user_details.display_name;
-            startWebsocket()
+            pollWebsocket()
             return checkCurrentTrack(host, master);
           })
           .then((obj) => {
