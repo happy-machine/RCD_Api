@@ -339,12 +339,14 @@ const startWebsocket = () => {
     console.log('Client connected');
     ws.on('close', () => console.log('Client disconnected'));
   });
+  setInterval(() => {
+    console.log('sending to ', wss)
+    wss.clients.forEach((client) => {
+      client.send(new Date().toTimeString());
+    });
+  }, 1000);
 }
-setInterval(() => {
-  wss && wss.clients.forEach((client) => {
-    client.send(new Date().toTimeString());
-  });
-}, 1000);
+
 
 
 
