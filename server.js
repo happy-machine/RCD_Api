@@ -153,21 +153,21 @@ const startWebsocket = () => {
         })
         default: break;
       }
-  
-      setInterval(
-        () => {
-          console.log('.')
-         wss.clients.forEach((client) => {
-            system_message_buffer && ws.send(system_message_buffer)
-            console.log(message_buffer.length && 'recieve ' + message_buffer)
-            message_buffer && client.send(message_buffer)
-            message_buffer = ''
-            system_message_buffer = ''
-          });}
-       ,
-        200
-      )
     });
+      
+    setInterval(
+      () => {
+        console.log('.')
+       wss.clients.forEach((client) => {
+          system_message_buffer && ws.send(system_message_buffer)
+          console.log(message_buffer.length && 'recieve ' + message_buffer)
+          message_buffer && client.send(message_buffer)
+          message_buffer = ''
+          system_message_buffer = ''
+        });}
+     ,
+      200
+    )
   });
 }
 
