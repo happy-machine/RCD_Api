@@ -340,7 +340,7 @@ const app = express()
 
 const poll = (wss) => {
   setInterval((wss) => {
-    wss.clients.forEach((client) => {
+    wss && wss.clients.forEach((client) => {
       client.send(new Date().toTimeString());
     });
   }, 1000);
