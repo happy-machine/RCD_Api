@@ -1,4 +1,5 @@
 const config = require('./config');
+const querystring = require('querystring');
 
 export const URLfactory = (endpoint, error = false, port = config.CLIENT_PORT, mode = config.MODE) => {
     if (config.MODE === config.DEPLOY) {
@@ -45,11 +46,11 @@ export const queryStringError = querystring.stringify({
     error: 'state_mismatch'
 });
 
-export const makeBuffer = (type = message, message, user_object, master) => {
+export const makeBuffer = (message, user_object, master, type = 'message', ) => {
     return JSON.stringify({
         type: type,
         message: message,
-        user_object: host,
+        user_object: user_object,
         master_object: master
       });
 }

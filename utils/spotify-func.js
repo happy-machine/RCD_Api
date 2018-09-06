@@ -39,23 +39,23 @@ module.exports = {
         }
     },
       
-    authOptions: (redirect_uri, code) => {
+    authOptions: (redirect_uri, state) => {
         return {
             url: 'https://accounts.spotify.com/api/token',
             form: {
             code: code,
             redirect_uri: redirect_uri,
-            grant_type: 'authorization_code'
+            grant_type: 'authorization_code',
+            state
             },
             headers: {
-            'Authorization': 'Basic ' + (new Buffer(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64'))
+            'Authorization': 'Basic ' + (new Buffer(config.CLIENT_ID + ':' + config.CLIENT_SECRET).toString('base64'))
             },
             json: true
         }
     },
 
     getTrack: (user, track_uri) => {
-        console.log('getting track')
         return {
             uri: 'https://api.spotify.com/v1/tracks/' + track_uri,
             headers: { 
@@ -70,14 +70,5 @@ module.exports = {
         client_id: config.CLIENT_ID,
         scope: config.PERMISSIONS_SCOPE,
         redirect_uri: config.HOST_REDIRECT_URI,
-      }  
+      } ,
 };
-/* 
-res.redirect('https://accounts.spotify.com/authorize?' +
-querystring.stringify({
-response_type: 'code',
-client_id: config.CLIENT_ID,
-scope: config.PERMISSIONS_SCOPE,
-redirect_uri: congif.HOST_REDIRECT_URI,
-state: state
-})); */

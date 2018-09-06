@@ -39,6 +39,7 @@ express().use(function (req, res, next) {
 });
 express().use(cookieParser())
 
+
 // Global state
 let wss
 let master = {
@@ -65,39 +66,6 @@ let message_buffer = JSON.stringify({
   message: 'test'
 });
 
-// websockets
-const startWebsocket = () => {
-  wss = new SocketServer({ server: app , path: "/socket"});
-}
-
-const pollWebsocket = () => {
-  wss.on('connection', function connection(ws) {
-    //if we get a message send it back to the clients with master object and label it with user token
-    ws.on('message', (message) => {
-      const message_rec = JSON.parse(message)
-      switch (message_rec.type){
-        case 'message': message_buffer = JSON.stringify({
-          type: 'message',
-          user_object: getCurrentUser(message_rec.token) || 'DJ Unknown',
-          master_object: master,
-          message: message_rec.message
-        })
-      default: break;
-      }
-    });
-
-   // send system and message_buffer from global state every 200ms and then reset state
-    setInterval(
-      () => {
-       wss.clients.forEach((client) => {
-          system_message_buffer && client.send(system_message_buffer)
-          message_buffer && client.send(message_buffer)
-        });
-        message_buffer = ''
-        system_message_buffer = ''
-      },200)
-  });
-}
 
 // get user details object from Spotify with token
 const getCurrentUser = (token) => {
@@ -118,7 +86,9 @@ router.get('/login', function (req, res) {
   const state = generateRandomString(16);
   res.cookie(config.STATE_KEY, state);
   if (!host.token) {
-    spotify-func.func(state, res)
+    res.redirect(`https://accounts.spotify.com/authorize?' 
+      ${querystring.stringify(spotify-func.spotify_options(config.HOST_REDIRECT_URI, state))
+    }`)
   } else {
     res.redirect(URLfactory('alreadyHosted'));
     console.log('already hosted')
@@ -129,9 +99,8 @@ router.get('/invite', function (req, res) {
   const state = generateRandomString(16);
   res.cookie(config.STATE_KEY, state);
   if (host.token) {
-    res.redirect(
-      `https://accounts.spotify.com/authorize?
-      ${queryString.stringify({ redirect_uri: config.GUEST_REDIRECT_URI, state, ...spotify-func.spotify_options})
+    res.redirect(`https://accounts.spotify.com/authorize?
+    ${querystring.stringify(spotify-func.spotify_options(config.GUEST_REDIRECT_URI, state))
     }`);
   } else {
     res.redirect(URLfactory('no_Host_Connected', ERROR));
@@ -151,7 +120,7 @@ router.get('/callback', function (req, res) {
     RP.post(spotify.authOptions(config.HOST_REDIRECT_URI, code), function (error, response, body) {
       if (!error && response.statusCode === 200) {
         host.token = body.access_token;
-        /* get user details and start websockets send greeting and token to client then start
+        /* get user details and start websockets. Send greeting and token to client then start
         polling the spotify api for track changes */
         RP(spotify.getUserOptions(host))
           .then((user_details) => {
@@ -288,8 +257,42 @@ const checkCurrentTrack = (user) => {
 // CONNECT TO WEBSOCKET THROUGH wss://<app-name>.herokuapp.com:443/socket
 const app = express()
 .use('/', router)
-.listen(config.SERVER_PORT, () => console.log(`Listening on ${ config.SERVER_PORT }`));
+.listen(config.SERVER_PORT, () => console.log(`Listening on ${config.SERVER_PORT }`));
 
+
+// websockets
+const startWebsocket = () => {
+  wss = new SocketServer({ server: app , path: "/socket"});
+}
+
+const pollWebsocket = () => {
+  wss.on('connection', function connection(ws) {
+    //if we get a message send it back to the clients with master object and label it with user token
+    ws.on('message', (message) => {
+      const message_rec = JSON.parse(message)
+      switch (message_rec.type){
+        case 'message': message_buffer = JSON.stringify({
+          type: 'message',
+          user_object: getCurrentUser(message_rec.token) || 'DJ Unknown',
+          master_object: master,
+          message: message_rec.message
+        })
+      default: break;
+      }
+    });
+
+   // send system and message_buffer from global state every 200ms and then reset state
+    setInterval(
+      () => {
+       wss.clients.forEach((client) => {
+          system_message_buffer && client.send(system_message_buffer)
+          message_buffer && client.send(message_buffer)
+        });
+        message_buffer = ''
+        system_message_buffer = ''
+      },200)
+  });
+}
 
 
 
