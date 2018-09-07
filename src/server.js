@@ -11,7 +11,7 @@ const config = require('./utils/config');
 const urls = require('./utils/urls');
 
 // IMPORTS
-import {URLfactory, defaultNameCheck, generateRandomString, wait_promise, queryStringError} from './utils/tools'
+import {URLfactory, defaultNameCheck, generateRandomString, wait_promise, queryStringError, makeBuffer} from './utils/tools'
 import {SELECTOR_CALLS, ERROR, MODE} from './utils/constants'
 
 const router = express.Router();
