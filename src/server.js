@@ -84,9 +84,7 @@ router.get('/login', function (req, res) {
   const state = generateRandomString(16);
   res.cookie(config.STATE_KEY, state);
   if (!host.token) {
-    res.redirect(`https://accounts.spotify.com/authorize?
-    ${querystring.stringify(spotify.spotifyOptions(urls.HOST_REDIRECT_URI[config.MODE], state))
-    }`)
+    res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(spotify.spotifyOptions(urls.HOST_REDIRECT_URI[config.MODE], state))}`)
   } else {
     res.redirect(URLfactory('alreadyHosted'));
     console.log('already hosted')
@@ -97,9 +95,7 @@ router.get('/invite', function (req, res) {
   const state = generateRandomString(16);
   res.cookie(config.STATE_KEY, state);
   if (host.token) {
-    res.redirect(`https://accounts.spotify.com/authorize?
-    ${querystring.stringify(spotify.spotifyOptions(urls.GUEST_REDIRECT_URI[config.MODE], state))
-    }`);
+    res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(spotify.spotifyOptions(urls.GUEST_REDIRECT_URI[config.MODE], state))}`);
   } else {
     res.redirect(URLfactory('no_Host_Connected', ERROR));
     console.log('No Host Connected')
