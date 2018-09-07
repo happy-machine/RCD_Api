@@ -12,7 +12,7 @@ const urls = require('./utils/urls');
 
 // IMPORTS
 import {URLfactory, defaultNameCheck, generateRandomString, wait_promise, queryStringError, makeBuffer} from './utils/tools'
-import {SELECTOR_CALLS, ERROR, MODE} from './utils/constants'
+import {SELECTOR_CALLS, ERROR, MODE, CONNECTION} from './utils/constants'
 
 const router = express.Router();
 
@@ -121,7 +121,7 @@ router.get('/callback', function (req, res) {
             startWebsocket()
             pollWebsocket()
             host.name = defaultNameCheck(user_details.display_name)
-            system_message_buffer = makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, master)
+            system_message_buffer = makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, master, CONNECTION)
             res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token })));
             pollUsersPlayback();
           })
@@ -165,7 +165,7 @@ router.get('/guestcallback', function (req, res) {
           .then( () => {
             // add new user to global user array
             users = [...users, newUser];
-            system_message_buffer = makeBuffer( `${defaultNameCheck(newUser.name)} joined the party...`, newUser, master, 'connection')
+            system_message_buffer = makeBuffer( `${defaultNameCheck(newUser.name)} joined the party...`, newUser, master, CONNECTION)
             res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token })))
           })
           .catch(e => {

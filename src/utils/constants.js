@@ -3,3 +3,4 @@ export const ERROR = 'ERROR';
 export const DEPLOY = 'DEPLOY';
 export const LOCAL = 'LOCAL';
 export const MODE = 'MODE';
+export const CONNECTION = 'connection';
