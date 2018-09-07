@@ -1,18 +1,19 @@
 const config = require('./config');
 const querystring = require('querystring');
+import {DEPLOY} from './constants'
 
-export const URLfactory = (endpoint, error = false, port = config.CLIENT_PORT, mode = 'DEPLOY') => {
-    if ( mode === 'DEPLOY') {
+export const URLfactory = (endpoint, error = false, port = config.CLIENT_PORT, mode = config.MODE) => {
+    if ( mode === DEPLOY) {
         if (error) {
-            return config.URL_ROOT[mode] + '/error?error=' + endpoint;
+            return urls.URL_ROOT[mode] + '/error?error=' + endpoint;
         } else {
-            return config.URL_ROOT[mode] + '/' + endpoint + '/';
+            return urls.URL_ROOT[mode] + '/' + endpoint + '/';
         }
     } else {
         if (error) {
-            return config.URL_ROOT[mode] + port + '/error?error=' + endpoint;
+            return urls.URL_ROOT[mode] + port + '/error?error=' + endpoint;
         } else {
-            return config.URL_ROOT[mode] + port + '/' + endpoint + '/';
+            return urls.URL_ROOT[mode] + port + '/' + endpoint + '/';
         }
     }
 }
