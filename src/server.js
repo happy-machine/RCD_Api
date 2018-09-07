@@ -84,8 +84,8 @@ router.get('/login', function (req, res) {
   const state = generateRandomString(16);
   res.cookie(config.STATE_KEY, state);
   if (!host.token) {
-    res.redirect(`https://accounts.spotify.com/authorize?' 
-      ${querystring.stringify(spotify.spotifyOptions(urls.HOST_REDIRECT_URI[config.MODE], state))
+    res.redirect(`https://accounts.spotify.com/authorize?
+    ${querystring.stringify(spotify.spotifyOptions(urls.HOST_REDIRECT_URI[config.MODE], state))
     }`)
   } else {
     res.redirect(URLfactory('alreadyHosted'));
