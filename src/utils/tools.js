@@ -2,8 +2,7 @@ const config = require('./config');
 const querystring = require('querystring');
 import {DEPLOY} from './constants'
 
-export const URLfactory = (endpoint, error = false, port = config.CLIENT_PORT, mode = config.MODE) => {
-    console.log('yo ', DEPLOY, config.MODE, config)
+export const URLfactory = (endpoint, error = false, port = config.CLIENT_PORT, mode = 'DEPLOY') => {
     if ( mode === DEPLOY) {
         if (error) {
             return config.URL_ROOT[mode] + '/error?error=' + endpoint;
