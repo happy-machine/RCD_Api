@@ -1,4 +1,5 @@
 const config = require('./config');
+const urls = require('./urls');
 const querystring = require('querystring');
 import {DEPLOY} from './constants'
 
