@@ -223,7 +223,7 @@ var syncToMaster = function syncToMaster(host, users) {
       });
     });
   } else {
-    console.log('only one user in the room');
+    // console.log('only one user in the room');
   }
 };
 
@@ -314,4 +314,5 @@ wss.on('connection', function connection(ws) {
   //   },200)
   // });
 });
+
 //# sourceMappingURL=server.js.map
