@@ -260,7 +260,7 @@ const pollUsersPlayback = () => {
   setInterval(() => {
     rooms.forEach(
       (room) => {
-        console.log('syncing ', room.users.length , ' users in room ', room.roomId);
+        // console.log('syncing ', room.users.length , ' users in room ', room.roomId);
         syncToMaster(room.host, room.users);
       });
   }, 350);
