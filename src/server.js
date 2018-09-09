@@ -182,6 +182,30 @@ router.get('/guestcallback', function (req, res) {
     })
   }
 });
+// Remove user from room
+router.get('/removeuser', function (req, res) {
+  console.log('attempting to remove user');
+  const token = req.query.token || null;
+  const roomId = req.query.roomId || null;
+  const state = req.query.state || null;
+    // find room and user
+    let room_index = rooms.findIndex(x => x.roomId == roomId);
+    let user_index = rooms[room_index].users.findIndex(x => x.token == token);
+    if(room_index > -1 && user_index > -1){
+      rooms[room_index].users.splice(user_index, 1);
+      console.log('user removed');
+      //TODO: STOP PLAYBACK FOR REMOVED USER?
+      res.json(true);
+    }
+    else if (rooms[room_index].host.token === token){
+      console.log('user is current host');
+      //TODO: REMOVE HOST AND ALL USERS?
+      res.json(true);
+    }else{
+      console.log('room or user could not be found');
+      res.json(false);
+    }
+});
 
 
 const syncToMaster = (host, users) => {
@@ -236,7 +260,7 @@ const pollUsersPlayback = () => {
   setInterval(() => {
     rooms.forEach(
       (room) => {
-        // console.log('syncing ', room.users.length , ' users in room ', room.roomId);
+        console.log('syncing ', room.users.length , ' users in room ', room.roomId);
         syncToMaster(room.host, room.users);
       });
   }, 350);
