@@ -48,11 +48,12 @@ export const queryStringError = querystring.stringify({
     error: 'state_mismatch'
 });
 
-export const makeBuffer = (message, user_object, master, type = 'message', ) => {
+export const makeBuffer = (message, user_object, master, type = 'message', roomId) => {
     return JSON.stringify({
         type: type,
         message: message,
         user_object: user_object,
-        master_object: master
+        master_object: master,
+        roomId: roomId
       });
 }

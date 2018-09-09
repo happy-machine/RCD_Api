@@ -61,12 +61,14 @@ var queryStringError = exports.queryStringError = querystring.stringify({
 
 var makeBuffer = exports.makeBuffer = function makeBuffer(message, user_object, master) {
     var type = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'message';
+    var roomId = arguments[4];
 
     return JSON.stringify({
         type: type,
         message: message,
         user_object: user_object,
-        master_object: master
+        master_object: master,
+        roomId: roomId
     });
 };
 //# sourceMappingURL=tools.js.map
