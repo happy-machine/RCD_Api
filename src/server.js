@@ -56,13 +56,15 @@ let system_message_buffer = JSON.stringify({
   type: '',
   user_object: {},
   master_object: {},
-  message: 'test'
+  message: 'test',
+  roomId: null
 });
 let message_buffer = JSON.stringify({
   type: '',
   user_object: {},
   master_object: {},
-  message: 'test'
+  message: 'test',
+  roomId: null
 });
 
 
@@ -94,13 +96,11 @@ router.get('/login', function (req, res) {
 // Guest Login
 router.get('/invite', function (req, res) {
   const state = generateRandomString(16);
+  const roomId = req.query.roomId;
+  console.log(roomId);
   res.cookie(config.STATE_KEY, state);
-  if (host.token) {
-    res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(spotify.spotifyOptions(urls.GUEST_REDIRECT_URI[config.MODE], state))}`);
-  } else {
-    res.redirect(URLfactory('no_Host_Connected', ERROR));
-    console.log('No Host Connected')
-  }
+  console.log(`https://accounts.spotify.com/authorize?${querystring.stringify(spotify.spotifyOptions(urls.GUEST_REDIRECT_URI[config.MODE], roomId))}`);
+  res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(spotify.spotifyOptions(urls.GUEST_REDIRECT_URI[config.MODE], roomId))}`);
 });
 // Host Callback from spotify
 router.get('/callback', function (req, res) {
@@ -119,10 +119,10 @@ router.get('/callback', function (req, res) {
         polling the spotify api for track changes */
         RP(spotify.getUserOptions(host))
           .then((user_details) => {
-            host.name = defaultNameCheck(user_details.display_name)
+            host.name = defaultNameCheck(user_details.display_name);
             let roomId = generateRandomString(8);
             rooms.push({ roomId : roomId, host: host, users:[] });
-            system_message_buffer = makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, master, CONNECTION)
+            system_message_buffer = makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, master, CONNECTION, roomId);
             res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId })));
             pollUsersPlayback();
           })
@@ -140,10 +140,8 @@ router.get('/callback', function (req, res) {
 // Guest callback from Spotify
 router.get('/guestcallback', function (req, res) {
   const code = req.query.code || null;
-  const state = req.query.state || null;
-  const roomId = req.query.roomId || null;
-  const storedState = req.headers.cookie ? req.headers.cookie.split(`${config.STATE_KEY}=`)[1] : null;
-  if (state === null || state !== storedState || roomId === null ) {
+  const roomId = req.query.state || null;
+  if (!code || !roomId) {
     res.redirect('/#' + queryStringError);
   } else {
     res.clearCookie(config.STATE_KEY);
@@ -168,7 +166,7 @@ router.get('/guestcallback', function (req, res) {
             // find room and add user
             let room_index = rooms.findIndex(x => x.roomId == roomId);
             rooms[room_index].users.push(newUser);
-            system_message_buffer = makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, master, CONNECTION)
+            system_message_buffer = makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, master, CONNECTION, roomId);
             res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token })))
           })
           .catch(e => {
@@ -182,9 +180,33 @@ router.get('/guestcallback', function (req, res) {
     })
   }
 });
+// Remove user from room
+router.get('/removeuser', function (req, res) {
+  console.log('attempting to remove user');
+  const token = req.query.token || null;
+  const roomId = req.query.roomId || null;
+  const state = req.query.state || null;
+    // find room and user
+    let room_index = rooms.findIndex(x => x.roomId == roomId);
+    let user_index = rooms[room_index].users.findIndex(x => x.token == token);
+    if(room_index > -1 && user_index > -1){
+      rooms[room_index].users.splice(user_index, 1);
+      console.log('user removed');
+      //TODO: STOP PLAYBACK FOR REMOVED USER?
+      res.json(true);
+    }
+    else if (rooms[room_index].host.token === token){
+      console.log('user is current host');
+      //TODO: REMOVE HOST AND ALL USERS?
+      res.json(true);
+    }else{
+      console.log('room or user could not be found');
+      res.json(false);
+    }
+});
 
 
-const syncToMaster = (host, users) => {
+const syncToMaster = (host, users, roomId) => {
   if (host.token && users) {
     let allRoomUsers = [...users, host]
     // make reference to users, leave global users array immutable
@@ -205,7 +227,8 @@ const syncToMaster = (host, users) => {
                     `${defaultNameCheck(master.selector_name)} ${SELECTOR_CALLS[Math.floor(Math.random() * SELECTOR_CALLS.length)]} ${master.track_name}!!`,
                     user,
                     master,
-                    'track_change'
+                    'track_change',
+                    roomId
                   )
                   wss.clients.forEach(function each(client) {
                     client.send(system_message_buffer);
@@ -237,7 +260,7 @@ const pollUsersPlayback = () => {
     rooms.forEach(
       (room) => {
         // console.log('syncing ', room.users.length , ' users in room ', room.roomId);
-        syncToMaster(room.host, room.users);
+        syncToMaster(room.host, room.users, room.roomId);
       });
   }, 350);
 };
@@ -272,7 +295,6 @@ wss.on('connection', function connection(ws) {
   setInterval(
     () => {
      wss.clients.forEach((client) => {
-        system_message_buffer && client.send(system_message_buffer)
         message_buffer && client.send(message_buffer)
       });
       message_buffer = ''
