@@ -69,7 +69,7 @@ let message_buffer = JSON.stringify({
 
 
 // get user details object from Spotify with token
-const getCurrentUser = (token) => {
+const getCurrentUser = (token, users, host) => {
   let allUsers = [...users, host];
   let user_to_return;
   allUsers.forEach(user => {
@@ -86,12 +86,7 @@ const getCurrentUser = (token) => {
 router.get('/login', function (req, res) {
   const state = generateRandomString(16);
   res.cookie(config.STATE_KEY, state);
-  if (!host.token) {
     res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(spotify.spotifyOptions(urls.HOST_REDIRECT_URI[config.MODE], state))}`)
-  } else {
-    res.redirect(URLfactory('alreadyHosted'));
-    console.log('already hosted')
-  }
 });
 // Guest Login
 router.get('/invite', function (req, res) {
@@ -123,7 +118,7 @@ router.get('/callback', function (req, res) {
             let roomId = generateRandomString(8);
             rooms.push({ roomId : roomId, host: host, users:[] });
             system_message_buffer = makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, master, CONNECTION, roomId);
-            res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId })));
+            res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name })));
             pollUsersPlayback();
           })
           .catch(e => {
@@ -167,7 +162,7 @@ router.get('/guestcallback', function (req, res) {
             let room_index = rooms.findIndex(x => x.roomId == roomId);
             rooms[room_index].users.push(newUser);
             system_message_buffer = makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, master, CONNECTION, roomId);
-            res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token })))
+            res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name})))
           })
           .catch(e => {
             res.redirect(URLfactory('guest_sync', ERROR))
@@ -291,9 +286,28 @@ const app = express()
 wss = new SocketServer({ server: app, path: "/socket" });
 
 wss.on('connection', function connection(ws) {
+  ws.on('message', function (message) {
+    var message_rec = JSON.parse(message);
+    console.log(message_rec)
+    console.log(message_rec.room_Id)
+    switch (message_rec.type) {
+      case 'message':
+        message_buffer = JSON.stringify({
+          type: 'message', 
+          userName: message_rec.userName || 'DJ Unknown',
+          master_object: master,
+          message: message_rec.message,
+          roomId: message_rec.roomId
+        });
+      default:
+        break;
+    }
+  });
  // send system and message_buffer from global state every 200ms and then reset state
   setInterval(
     () => {
+     
+
      wss.clients.forEach((client) => {
         message_buffer && client.send(message_buffer)
       });
