@@ -131,12 +131,11 @@ router.get('/callback', function (req, res) {
         /* get user details and start websockets. Send greeting and token to client then start
         polling the spotify api for track changes */
         RP(spotify.getUserOptions(host)).then(function (user_details) {
-          // startWebsocket()
-          // pollWebsocket()
           host.name = (0, _tools.defaultNameCheck)(user_details.display_name);
-          rooms.push({ host: host, users: [] });
+          var roomId = (0, _tools.generateRandomString)(8);
+          rooms.push({ roomId: roomId, host: host, users: [] });
           system_message_buffer = (0, _tools.makeBuffer)((0, _tools.defaultNameCheck)(host.name) + ' stepped up to the 1210s..', host, master, _constants.CONNECTION);
-          res.redirect((0, _tools.URLfactory)('hostLoggedIn?' + _querystring2.default.stringify({ token: host.token, room_index: rooms.length })));
+          res.redirect((0, _tools.URLfactory)('hostLoggedIn?' + _querystring2.default.stringify({ token: host.token, roomId: roomId })));
           pollUsersPlayback();
         }).catch(function (e) {
           res.redirect((0, _tools.URLfactory)('getting_host_options', _constants.ERROR));
@@ -153,9 +152,9 @@ router.get('/callback', function (req, res) {
 router.get('/guestcallback', function (req, res) {
   var code = req.query.code || null;
   var state = req.query.state || null;
-  var room_index = req.query.room_index || 0;
+  var roomId = req.query.roomId || null;
   var storedState = req.headers.cookie ? req.headers.cookie.split(config.STATE_KEY + '=')[1] : null;
-  if (state === null || state !== storedState) {
+  if (state === null || state !== storedState || roomId === null) {
     res.redirect('/#' + _tools.queryStringError);
   } else {
     res.clearCookie(config.STATE_KEY);
@@ -174,9 +173,11 @@ router.get('/guestcallback', function (req, res) {
           // after current track in master state is checked set playback for current user
           return RP(spotify.setPlaybackOptions(newUser, master, config.PLAYBACK_DELAY));
         }).then(function () {
-          // add new user to global user array
+          // find room and add user
+          var room_index = rooms.findIndex(function (x) {
+            return x.roomId == roomId;
+          });
           rooms[room_index].users.push(newUser);
-          // users = [...users, newUser];
           system_message_buffer = (0, _tools.makeBuffer)((0, _tools.defaultNameCheck)(newUser.name) + ' joined the party...', newUser, master, _constants.CONNECTION);
           res.redirect((0, _tools.URLfactory)('guestLoggedIn?' + _querystring2.default.stringify({ token: newUser.token })));
         }).catch(function (e) {
@@ -194,7 +195,6 @@ router.get('/guestcallback', function (req, res) {
 var syncToMaster = function syncToMaster(host, users) {
   if (host.token && users) {
     var allRoomUsers = [].concat(_toConsumableArray(users), [host]);
-    console.log('syncing room');
     // make reference to users, leave global users array immutable
     allRoomUsers.some(function (user) {
       (0, _tools.wait_promise)(350).then(function () {
@@ -238,8 +238,8 @@ var resync = function resync(allUsers, master) {
 // polling loop at 350ms
 var pollUsersPlayback = function pollUsersPlayback() {
   setInterval(function () {
-    rooms.forEach(function (room, roomIndex) {
-      console.log('syncing ', room.users.length, ' users in room ', roomIndex);
+    rooms.forEach(function (room) {
+      // console.log('syncing ', room.users.length , ' users in room ', room.roomId);
       syncToMaster(room.host, room.users);
     });
   }, 350);
@@ -269,50 +269,17 @@ var app = (0, _express2.default)().use('/', router).listen(config.SERVER_PORT, f
 });
 
 // CONNECT TO WEBSOCKET THROUGH wss://<app-name>.herokuapp.com:443/socket
-// const startWebsocket = () => {
 wss = new SocketServer({ server: app, path: "/socket" });
-// }
 
-
-// const pollWebsocket = () => {
-setInterval(function () {
-  var array = new Float32Array(5);
-  for (var i = 0; i < array.length; ++i) {
-    array[i] = i / 2;
-  }
-
-  wss.clients.forEach(function each(client) {
-    // client.send(array);
-  });
-}, 2000);
 wss.on('connection', function connection(ws) {
-  //if we get a message send it back to the clients with master object and label it with user token
-  ws.on('message', function (message) {
-    console.log(message);
-    // const message_rec = JSON.parse(message)
-    // switch (message_rec.type){
-    //   case 'message': 
-    // message_buffer = JSON.stringify({
-    //     type: 'message',
-    //     user_object: getCurrentUser(message_rec.token) || 'DJ Unknown',
-    //     master_object: master,
-    //     message: message_rec.message
-    //   })
-    // default: break;
-    // }
-  });
-
   // send system and message_buffer from global state every 200ms and then reset state
-  // setInterval(
-  //   () => {
-  //    wss.clients.forEach((client) => {
-  //       system_message_buffer && client.send(system_message_buffer)
-  //       message_buffer && client.send(message_buffer)
-  //     });
-  //     message_buffer = ''
-  //     system_message_buffer = ''
-  //   },200)
-  // });
+  setInterval(function () {
+    wss.clients.forEach(function (client) {
+      system_message_buffer && client.send(system_message_buffer);
+      message_buffer && client.send(message_buffer);
+    });
+    message_buffer = '';
+    system_message_buffer = '';
+  }, 200);
 });
-
 //# sourceMappingURL=server.js.map
