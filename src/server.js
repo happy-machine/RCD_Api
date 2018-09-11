@@ -293,6 +293,7 @@ wss.on('connection', function connection(ws) {
     var message_rec = JSON.parse(message);
     console.log(message_rec)
     console.log(message_rec.room_Id)
+    console.log(wss.clients.entries().length,' connections')
     switch (message_rec.type) {
       case 'message':
         message_buffer = JSON.stringify({
@@ -310,7 +311,6 @@ wss.on('connection', function connection(ws) {
   setInterval(
     () => {
      
-      console.log(wss.clients.length,' connections')
      wss.clients.forEach((client) => {
         message_buffer && client.send(message_buffer)
       });
