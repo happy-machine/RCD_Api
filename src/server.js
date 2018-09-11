@@ -314,7 +314,7 @@ wss.on('connection', function connection(ws) {
     //  wss.clients.forEach((client) => {
     //     message_buffer && client.send(message_buffer)
     //   });
-    message_buffer && client.send(message_buffer)
+    message_buffer && wss.send(message_buffer)
       message_buffer = ''
       system_message_buffer = ''
     },200)
