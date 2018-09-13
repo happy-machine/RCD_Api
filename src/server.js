@@ -261,7 +261,7 @@ const pollUsersPlayback = () => {
         console.log('sending poll signal')
         syncToMaster(room.host, room.users, room.roomId);
       });
-  }, 800);
+  }, 1000);
 };
 
 const checkCurrentTrack = (user) => {
