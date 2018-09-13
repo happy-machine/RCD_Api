@@ -257,7 +257,7 @@ const pollUsersPlayback = () => {
         // console.log('syncing ', room.users.length , ' users in room ', room.roomId);
         syncToMaster(room.host, room.users, room.roomId);
       });
-  }, 350);
+  }, 800);
 };
 
 const checkCurrentTrack = (user) => {
@@ -311,10 +311,10 @@ wss.on('connection', function connection(ws) {
   setInterval(
     () => {
      
-    //  wss.clients.forEach((client) => {
-    //     message_buffer && client.send(message_buffer)
-    //   });
-    message_buffer && ws.send(message_buffer)
+     wss.clients.forEach((client) => {
+        message_buffer && client.send(message_buffer)
+      });
+
       message_buffer = ''
       system_message_buffer = ''
     },200)
