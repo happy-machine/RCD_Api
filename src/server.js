@@ -207,12 +207,14 @@ const syncToMaster = (host, users, roomId) => {
     // make reference to users, leave global users array immutable
     allRoomUsers.some(
       (user) => {
+        console.log('in sync at user: ', user.track_uri, 'and user name', user.name, 'master is ', master.track_uri)
         wait_promise(350)
           .then(() => checkCurrentTrack(user))
           .then(result => {
             if (result.track_uri !== master.track_uri) {
               // Check users current track, if URI is different to one in master state ...
               master = result
+              console.log('master switched to ', master.track_uri)
               return RP(spotify.getTrack(user, master.track_uri.split('track:')[1]))
                 .then((track)=>{
                   master.album_cover = track.album.images[0].url
@@ -231,6 +233,7 @@ const syncToMaster = (host, users, roomId) => {
                   /* remove the current user from the reference to the array of users
                   and then run through all the remaining users setting their track details to master */
                   allRoomUsers.splice(allRoomUsers.indexOf(user), 1)
+                  console.log(' and now all users to send sync to are ', allRoomUsers)
                   resync(allRoomUsers, master);
                   return true
                 })
@@ -255,6 +258,7 @@ const pollUsersPlayback = () => {
     rooms.forEach(
       (room) => {
         // console.log('syncing ', room.users.length , ' users in room ', room.roomId);
+        console.log('sending poll signal')
         syncToMaster(room.host, room.users, room.roomId);
       });
   }, 800);
@@ -289,9 +293,7 @@ wss.on('connection', function connection(ws) {
   console.log('ws connected')
   ws.on('message', function (message) {
     console.log('got message', JSON.parse(message))
-    console.log('and wss= ',wss)
     var message_rec = JSON.parse(message);
-    console.log(message_rec)
     console.log(message_rec.room_Id)
     console.log(wss.clients.entries().length,' connections')
     switch (message_rec.type) {
