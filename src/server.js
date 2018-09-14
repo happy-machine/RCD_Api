@@ -139,7 +139,7 @@ router.get('/callback', function (req, res) {
             host.id = user_details.id;
             let roomId = generateRandomString(8);
             rooms.push({ roomId : roomId, host: host, users:[] , master:{}});
-            system_message_buffer = makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, master, CONNECTION, roomId);
+            system_message_buffer = makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, {}, CONNECTION, roomId);
             res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name })));
             pollUsersPlayback();
           })
@@ -169,30 +169,33 @@ router.get('/guestcallback', function (req, res) {
     RP.post(spotify.authOptions(urls.GUEST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
       if (!error && response.statusCode === 200) {
         let newUser = {};
-        newUser.token = body.access_token;
+        newUser.token = body.access_token;        
         RP(spotify.getUserOptions(newUser))
           .then( user_details => {
             console.log(`${user_details.name} trying to join.`);
             newUser.name = user_details.display_name;
                 newUser.id = user_details.id;
                 console.log(`${defaultNameCheck(newUser.name)} trying to join.`);
-                return checkCurrentTrack(room.master);
+                return checkCurrentTrack(newUser);
           })
           .then( obj => {
-            master = obj;
+            let room_index = rooms.findIndex(x => x.roomId == roomId);
+            rooms[room_index].master = obj
+            console.log('token after get current track: ', newUser.token)
             // after current track in master state is checked set playback for current user
-            return RP(spotify.setPlaybackOptions(newUser, master, config.PLAYBACK_DELAY));
+            return RP(spotify.setPlaybackOptions(newUser, rooms[room_index].master, config.PLAYBACK_DELAY));
           })
           .then( () => {
+            console.log('token after set playback: ', newUser.token)
             // find room and add user
-            let room_index = rooms.findIndex(x => x.roomId == roomId);
             rooms[room_index].users.push(newUser);
-            system_message_buffer = makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, master, CONNECTION, roomId);
+            system_message_buffer = makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, rooms[room_index].master, CONNECTION, roomId);
             res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name})))
           })
           .catch(e => {
             res.redirect(URLfactory('guest_sync', ERROR))
             console.log('Error in guest sync ', e)
+            // yeh but were getting that far in the log
           })
       } else {
         res.redirect(URLfactory('guest_callback', ERROR))
@@ -214,20 +217,28 @@ router.get('/removeuser', function (req, res) {
   const state = req.query.state || null;
   removeUser(roomId, token, res) 
 });
-// Get current track for room
+// Get current track for room (I FIXED THIS)
 router.get('/getcurrenttrack', function(req,res){
   const roomId = req.query.roomId;
     // find room
+    console.log(roomId);
     let room_index = rooms.findIndex(x => x.roomId == roomId);
-    if(room_index){
+    console.log(room_index)
+    if(room_index > -1){
       res.json(rooms[room_index].master || null);
     }
 });
 
+// Get rooms 
+//SUPER USEFUL FOR DEBUGGING!!!
+router.get('/getrooms', function(req,res){
+  res.json(rooms || null);
+});
+//oh yeah... I was looking
 // RESET
 router.get('/resetserver', function(req, res){
-  rooms = [];
-  res.JSON(true);
+rooms = [];
+res.json(true);
 })
 
 
@@ -238,7 +249,8 @@ const syncToMaster = (host, users, roomId) => {
     // make reference to users, leave global users array immutable
     allRoomUsers.some(
       (user) => {
-        console.log('in sync at at user ', user.name, 'master track is ', master.track_uri)
+        let master = {}
+        console.log('in sync at at user ', user.name, 'master track is ',  rooms[room_index].master.track_uri)
         wait_promise(350)
           .then(() => checkCurrentTrack(user))
           .then(result => {
@@ -250,11 +262,12 @@ const syncToMaster = (host, users, roomId) => {
                 .then((track)=>{
                   master.album_cover = track.album.images[0].url;
                   rooms[room_index].master = master;
-
                   /* get the new tracks cover image and set the master to the new track that is taking over
                   then set the system message buffer to send update info to the client */
                   system_message_buffer = makeBuffer(
-                    `${defaultNameCheck(master.selector_name)} ${SELECTOR_CALLS[Math.floor(Math.random() * SELECTOR_CALLS.length)]} ${master.track_name}!!`,
+                    `${defaultNameCheck(master.selector_name)} 
+                      ${SELECTOR_CALLS[Math.floor(Math.random() * SELECTOR_CALLS.length)]} 
+                      ${master.track_name}!!`,
                     user,
                     master,
                     'track_change',
@@ -268,6 +281,7 @@ const syncToMaster = (host, users, roomId) => {
                   allRoomUsers.splice(allRoomUsers.indexOf(user), 1)
                   console.log(' and now all users to send sync to are ', allRoomUsers)
                   resync(allRoomUsers, master);
+                  // yeh yep totes ok so i guess i didnt need to just make the code even more ugly here
                   return true
                 })
             }
@@ -347,12 +361,8 @@ wss.on('connection', function connection(ws) {
           message: message_rec.message,
           roomId: message_rec.roomId
         }); break;
-      case 'close':
-      removeUser(message_rec.roomId,message_rec.token)
-      let room_index = rooms.findIndex(x => x.roomId == message_rec.roomId)
-      rooms[room_index] = {}; break;
-      default:
-        break;
+      case 'close': removeUser(message_rec.roomId,message_rec.token); break;
+      default: break;
     }
   });
  // send system and message_buffer from global state every 200ms and then reset state
