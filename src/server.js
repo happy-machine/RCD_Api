@@ -166,6 +166,7 @@ router.get('/guestcallback', function (req, res) {
 
     if(getRoom(roomId)){
       let room = getRoom(roomId)
+      let room_index = rooms.findIndex(x => x.roomId == roomId);
     RP.post(spotify.authOptions(urls.GUEST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
       if (!error && response.statusCode === 200) {
         let newUser = {};
@@ -179,12 +180,14 @@ router.get('/guestcallback', function (req, res) {
                 return checkCurrentTrack(newUser);
           })
           .then( obj => {
-            let room_index = rooms.findIndex(x => x.roomId == roomId);
+
+            
             rooms[room_index].master = obj
             console.log('token after get current track: ', newUser.token)
             // after current track in master state is checked set playback for current user
             return RP(spotify.setPlaybackOptions(newUser, rooms[room_index].master, config.PLAYBACK_DELAY));
           })
+          // ok where is rooms defined ...
           .then( () => {
             console.log('token after set playback: ', newUser.token)
             // find room and add user
@@ -195,7 +198,6 @@ router.get('/guestcallback', function (req, res) {
           .catch(e => {
             res.redirect(URLfactory('guest_sync', ERROR))
             console.log('Error in guest sync ', e)
-            // yeh but were getting that far in the log
           })
       } else {
         res.redirect(URLfactory('guest_callback', ERROR))
