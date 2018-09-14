@@ -236,7 +236,7 @@ const syncToMaster = (host, users, roomId) => {
     // make reference to users, leave global users array immutable
     allRoomUsers.some(
       (user) => {
-        console.log('in sync at user: ', user.track_uri, 'and user name', user.name, 'master is ', master.track_uri)
+        console.log('in sync at at user ', user.name, 'master track is ', master.track_uri)
         wait_promise(350)
           .then(() => checkCurrentTrack(user))
           .then(result => {
@@ -288,7 +288,6 @@ const pollUsersPlayback = () => {
   setInterval(() => {
     rooms.forEach(
       (room) => {
-        // console.log('syncing ', room.users.length , ' users in room ', room.roomId);
         console.log('sending poll signal')
         syncToMaster(room.host, room.users, room.roomId);
       });
