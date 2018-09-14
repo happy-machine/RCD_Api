@@ -331,10 +331,11 @@ wss = new SocketServer({ server: app, path: "/socket" });
 wss.on('connection', function connection(ws) {
   console.log('ws connected')
   ws.on('message', function (message) {
-    console.log('got message', JSON.parse(message))
+    if (JSON.parse(message) !== '.') {
+      console.log('got message', JSON.parse(message))
+      console.log(wss.clients.entries().length,' connections')
+    }
     var message_rec = JSON.parse(message);
-    console.log(message_rec.room_Id)
-    console.log(wss.clients.entries().length,' connections')
     switch (message_rec.type) {
       case 'message':
         message_buffer = JSON.stringify({
