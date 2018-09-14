@@ -343,10 +343,10 @@ wss.on('connection', function connection(ws) {
           master_object: master,
           message: message_rec.message,
           roomId: message_rec.roomId
-        });
+        }); break;
       case 'close':
       let room_index = rooms.findIndex(x => x.roomId == message_rec.roomId)
-      rooms[room_index] = {}
+      rooms[room_index] = {}; break;
       default:
         break;
     }
