@@ -80,6 +80,27 @@ const getCurrentUser = (token, users, host) => {
   return user_to_return;
 };
 
+const removeUser = (roomId, token, res) => {
+  let room_index = rooms.findIndex(x => x.roomId == roomId);
+  let user_index = rooms[room_index].users.findIndex(x => x.token == token);
+  if(room_index > -1 && user_index > -1){
+    rooms[room_index].users.splice(user_index, 1);
+    console.log('user removed');
+    //TODO: STOP PLAYBACK FOR REMOVED USER?
+    // RP(spotify.stopPlayback(token)).then((response)=>{
+    //   res.json(true);
+    // })
+    // .catch(e => console.log(e.message));
+  }
+  else if (rooms[room_index].host.token === token){
+    console.log('user is current host');
+    //TODO: REMOVE HOST AND ALL USERS?
+    res && res.json(true);
+  }else{
+    console.log('room or user could not be found');
+    res && res.json(false);
+  }
+}
 
 // Endpoints 
 // Host login
@@ -191,26 +212,7 @@ router.get('/removeuser', function (req, res) {
   const token = req.query.token || null;
   const roomId = req.query.roomId || null;
   const state = req.query.state || null;
-    // find room and user
-    let room_index = rooms.findIndex(x => x.roomId == roomId);
-    let user_index = rooms[room_index].users.findIndex(x => x.token == token);
-    if(room_index > -1 && user_index > -1){
-      rooms[room_index].users.splice(user_index, 1);
-      console.log('user removed');
-      //TODO: STOP PLAYBACK FOR REMOVED USER?
-      RP(spotify.stopPlayback(token)).then((response)=>{
-        res.json(true);
-      })
-      .catch(e => console.log(e.message));
-    }
-    else if (rooms[room_index].host.token === token){
-      console.log('user is current host');
-      //TODO: REMOVE HOST AND ALL USERS?
-      res.json(true);
-    }else{
-      console.log('room or user could not be found');
-      res.json(false);
-    }
+  removeUser(roomId, token, res) 
 });
 // Get current track for room
 router.get('/getcurrenttrack', function(req,res){
@@ -346,6 +348,7 @@ wss.on('connection', function connection(ws) {
           roomId: message_rec.roomId
         }); break;
       case 'close':
+      removeUser(message_rec.roomId,message_rec.token)
       let room_index = rooms.findIndex(x => x.roomId == message_rec.roomId)
       rooms[room_index] = {}; break;
       default:
