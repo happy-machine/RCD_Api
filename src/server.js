@@ -120,6 +120,7 @@ router.get('/invite', function (req, res) {
 });
 // Host Callback from spotify
 router.get('/callback', function (req, res) {
+  console.log('got host callback')
   const code = req.query.code || null;
   const state = req.query.state || null;
   const storedState = req.headers.cookie ? req.headers.cookie.split(`${config.STATE_KEY}=`)[1] : null;
@@ -138,6 +139,7 @@ router.get('/callback', function (req, res) {
             host.name = defaultNameCheck(user_details.display_name);
             host.id = user_details.id;
             let roomId = generateRandomString(8);
+            console.log('creating room for host: ', roomId)
             rooms.push({ roomId : roomId, host: host, users:[] , master:{}});
             system_message_buffer = makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, {}, CONNECTION, roomId);
             res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name })));
@@ -180,20 +182,16 @@ router.get('/guestcallback', function (req, res) {
                 return checkCurrentTrack(newUser);
           })
           .then( obj => {
-
-            
             rooms[room_index].master = obj
             console.log('token after get current track: ', newUser.token)
             // after current track in master state is checked set playback for current user
             return RP(spotify.setPlaybackOptions(newUser, rooms[room_index].master, config.PLAYBACK_DELAY));
           })
-          // ok where is rooms defined ...
           .then( () => {
-            console.log('token after set playback: ', newUser.token)
             // find room and add user
             rooms[room_index].users.push(newUser);
-            system_message_buffer = makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, rooms[room_index].master, CONNECTION, roomId);
             res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name})))
+            wss.send(makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, rooms[room_index].master, CONNECTION, roomId))
           })
           .catch(e => {
             res.redirect(URLfactory('guest_sync', ERROR))
@@ -275,15 +273,15 @@ const syncToMaster = (host, users, roomId) => {
                     'track_change',
                     roomId
                   );
-                  wss.clients.forEach(function each(client) {
-                    client.send(system_message_buffer);
-                  });
+                  console.log('changing system buffer message')
+                  // wss.clients.forEach(function each(client) {
+                  //   client.send(system_message_buffer);
+                  // });
                   /* remove the current user from the reference to the array of users
                   and then run through all the remaining users setting their track details to master */
                   allRoomUsers.splice(allRoomUsers.indexOf(user), 1)
                   console.log(' and now all users to send sync to are ', allRoomUsers)
                   resync(allRoomUsers, master);
-                  // yeh yep totes ok so i guess i didnt need to just make the code even more ugly here
                   return true
                 })
             }
@@ -373,6 +371,7 @@ wss.on('connection', function connection(ws) {
      
      wss.clients.forEach((client) => {
         message_buffer && client.send(message_buffer)
+        system_message_buffer && client.send(system_message_buffer)
       });
 
       message_buffer = ''
