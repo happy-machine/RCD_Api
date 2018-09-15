@@ -179,7 +179,7 @@ router.get('/guestcallback', function (req, res) {
             newUser.name = user_details.display_name;
                 newUser.id = user_details.id;
                 console.log(`${defaultNameCheck(newUser.name)} trying to join.`);
-                return checkCurrentTrack(newUser);
+                return checkCurrentTrack(rooms[room_index].host);
           })
           .then( obj => {
             rooms[room_index].master = obj
