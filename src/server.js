@@ -47,10 +47,10 @@ let master = {
   play_position: null,
   selector_name: null,
   selector_token: null,
+  selector_id: null,
   album_cover: null,
 };
 const host = { token: null, name: null, id: null };
-let users = [];
 let rooms = [];
 let system_message_buffer = JSON.stringify({
   type: '',
@@ -68,21 +68,9 @@ let message_buffer = JSON.stringify({
 });
 
 
-// get user details object from Spotify with token
-const getCurrentUser = (token, users, host) => {
-  let allUsers = [...users, host];
-  let user_to_return;
-  allUsers.forEach(user => {
-    if (user.token === token) {
-      user_to_return = user;
-    }
-  });
-  return user_to_return;
-};
-
-const removeUser = (roomId, token, res) => {
+const removeUser = (roomId, id, res) => {
   let room_index = rooms.findIndex(x => x.roomId == roomId);
-  let user_index = rooms[room_index].users.findIndex(x => x.token == token);
+  let user_index = rooms[room_index].users.findIndex(x => x.id == id);
   if (room_index > -1 && user_index > -1) {
     rooms[room_index].users.splice(user_index, 1);
     console.log('user removed');
@@ -92,7 +80,7 @@ const removeUser = (roomId, token, res) => {
     // })
     // .catch(e => console.log(e.message));
   }
-  else if (rooms[room_index].host.token === token) {
+  else if (rooms[room_index].host.id === id) {
     console.log('user is current host');
     //TODO: REMOVE HOST AND ALL USERS?
     res && res.json(true);
@@ -113,9 +101,7 @@ router.get('/login', function (req, res) {
 router.get('/invite', function (req, res) {
   const state = generateRandomString(16);
   const roomId = req.query.roomId;
-  console.log(roomId);
   res.cookie(config.STATE_KEY, state);
-  console.log(`https://accounts.spotify.com/authorize?${querystring.stringify(spotify.spotifyOptions(urls.GUEST_REDIRECT_URI[config.MODE], roomId))}`);
   res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(spotify.spotifyOptions(urls.GUEST_REDIRECT_URI[config.MODE], roomId))}`);
 });
 // Host Callback from spotify
@@ -179,7 +165,6 @@ router.get('/guestcallback', function (req, res) {
               newUser.name = user_details.display_name;
               newUser.id = user_details.id;
               console.log(`${defaultNameCheck(newUser.name)} trying to join.`);
-              console.log(_room.host);
               return checkCurrentTrack(_room.host);
             })
             .then(_currentTrack => {
@@ -211,10 +196,10 @@ router.get('/guestcallback', function (req, res) {
 // Remove user from room
 router.get('/removeuser', function (req, res) {
   console.log('attempting to remove user');
-  const token = req.query.token || null;
+  const id = req.query.id || null;
   const roomId = req.query.roomId || null;
   const state = req.query.state || null;
-  removeUser(roomId, token, res)
+  removeUser(roomId, id, res)
 });
 
 // Get current track for room (I FIXED THIS)
@@ -239,7 +224,7 @@ router.get('/resetserver', function (req, res) {
 
 
 const syncToMaster = (host, users, roomId) => {
-  if (host.token && users.length) {
+  if (host.id && users.length) {
     let _allRoomUsers = [...users, host];
     let _roomIndex = rooms.findIndex(x => x.roomId == roomId);
     let _master = {};
@@ -250,7 +235,6 @@ const syncToMaster = (host, users, roomId) => {
         wait_promise(350)
           .then(() => checkCurrentTrack(user))
           .then(result => {
-            console.log(result);
             if (result.track_uri !== rooms[_roomIndex].master.track_uri) {
               // Check users current track, if URI is different to one in master state ...
               _master = result;
@@ -301,7 +285,7 @@ const pollUsersPlayback = () => {
   setInterval(() => {
     rooms.forEach(
       (room) => {
-        console.log('sending poll signal')
+        console.log('sending poll signal');
         syncToMaster(room.host, room.users, room.roomId);
       });
   }, 1000);
@@ -316,7 +300,8 @@ const checkCurrentTrack = (user) => {
         artist_name: res.item.artists[0].name,
         play_position: res.progress_ms,
         selector_name: user.name,
-        selector_token: user.token
+        selector_token: user.token,
+        selector_id: user.id
       }
       return resolve(master_ref);
     })
@@ -358,7 +343,7 @@ wss.on('connection', function connection(ws) {
           message: message_rec.message,
           roomId: message_rec.roomId
         }); break;
-      case 'close': removeUser(message_rec.roomId, message_rec.token); break;
+      case 'close': removeUser(message_rec.roomId, message_rec.id); break;
       default: break;
     }
   });
