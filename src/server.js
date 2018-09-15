@@ -6,7 +6,8 @@ import express from 'express';
 import querystring from 'querystring';
 const SocketServer = require('ws').Server;
 const RP = require('request-promise');
-const spotify = require('./utils/spotify_func');
+const SpotifyService = require('./utils/spotify_func');
+const RoomService = require('./utils/room_func');
 const config = require('./utils/config');
 const urls = require('./utils/urls');
 
@@ -68,41 +69,20 @@ let message_buffer = JSON.stringify({
 });
 
 
-const removeUser = (roomId, id, res) => {
-  let room_index = rooms.findIndex(x => x.roomId == roomId);
-  let user_index = rooms[room_index].users.findIndex(x => x.id == id);
-  if (room_index > -1 && user_index > -1) {
-    rooms[room_index].users.splice(user_index, 1);
-    console.log('user removed');
-    //TODO: STOP PLAYBACK FOR REMOVED USER?
-    // RP(spotify.stopPlayback(token)).then((response)=>{
-    //   res.json(true);
-    // })
-    // .catch(e => console.log(e.message));
-  }
-  else if (rooms[room_index].host.id === id) {
-    console.log('user is current host');
-    //TODO: REMOVE HOST AND ALL USERS?
-    res && res.json(true);
-  } else {
-    console.log('room or user could not be found');
-    res && res.json(false);
-  }
-}
 
 // Endpoints 
 // Host login
 router.get('/login', function (req, res) {
   const state = generateRandomString(16);
   res.cookie(config.STATE_KEY, state);
-  res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(spotify.spotifyOptions(urls.HOST_REDIRECT_URI[config.MODE], state))}`)
+  res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(SpotifyService.spotifyOptions(urls.HOST_REDIRECT_URI[config.MODE], state))}`)
 });
 // Guest Login
 router.get('/invite', function (req, res) {
   const state = generateRandomString(16);
   const roomId = req.query.roomId;
   res.cookie(config.STATE_KEY, state);
-  res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(spotify.spotifyOptions(urls.GUEST_REDIRECT_URI[config.MODE], roomId))}`);
+  res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(SpotifyService.spotifyOptions(urls.GUEST_REDIRECT_URI[config.MODE], roomId))}`);
 });
 // Host Callback from spotify
 router.get('/callback', function (req, res) {
@@ -115,12 +95,12 @@ router.get('/callback', function (req, res) {
   } else {
     res.clearCookie(config.STATE_KEY);
 
-    RP.post(spotify.authOptions(urls.HOST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
+    RP.post(SpotifyService.authOptions(urls.HOST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
       if (!error && response.statusCode === 200) {
         host.token = body.access_token;
         /* get user details and start websockets. Send greeting and token to client then start
         polling the spotify api for track changes */
-        RP(spotify.getUserOptions(host))
+        RP(SpotifyService.getUserOptions(host))
           .then((user_details) => {
             host.name = defaultNameCheck(user_details.display_name);
             host.id = user_details.id;
@@ -152,14 +132,14 @@ router.get('/guestcallback', function (req, res) {
     res.clearCookie(config.STATE_KEY);
 
 
-    if (getRoom(roomId)) {
-      let _room = getRoom(roomId);
+    if (RoomService.getRoom(rooms, roomId)) {
+      let _room = RoomService.getRoom(rooms, roomId);
       let _roomIndex = rooms.findIndex(x => x.roomId == roomId);
-      RP.post(spotify.authOptions(urls.GUEST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
+      RP.post(SpotifyService.authOptions(urls.GUEST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
         if (!error && response.statusCode === 200) {
           let newUser = {};
           newUser.token = body.access_token;
-          RP(spotify.getUserOptions(newUser))
+          RP(SpotifyService.getUserOptions(newUser))
             .then(user_details => {
               console.log(`${user_details.name} trying to join.`);
               newUser.name = user_details.display_name;
@@ -168,7 +148,7 @@ router.get('/guestcallback', function (req, res) {
               return checkCurrentTrack(_room.host);
             })
             .then(_currentTrack => {
-              return RP(spotify.setPlaybackOptions(newUser, _currentTrack, config.PLAYBACK_DELAY));
+              return RP(SpotifyService.setPlaybackOptions(newUser, _currentTrack, config.PLAYBACK_DELAY));
             })
             .then(() => {
               // find room and add user
@@ -199,7 +179,7 @@ router.get('/removeuser', function (req, res) {
   const id = req.query.id || null;
   const roomId = req.query.roomId || null;
   const state = req.query.state || null;
-  removeUser(roomId, id, res)
+  RoomService.removeUser(rooms, roomId, id, res)
 });
 
 // Get current track for room (I FIXED THIS)
@@ -239,7 +219,7 @@ const syncToMaster = (host, users, roomId) => {
               // Check users current track, if URI is different to one in master state ...
               _master = result;
               console.log('master switched to ', _master.track_uri)
-              return RP(spotify.getTrack(user, _master.track_uri.split('track:')[1]))
+              return RP(SpotifyService.getTrack(user, _master.track_uri.split('track:')[1]))
                 .then((track) => {
                   _master.album_cover = track.album.images[0].url;
                   rooms[_roomIndex].master = _master;
@@ -276,7 +256,7 @@ const syncToMaster = (host, users, roomId) => {
 
 const resync = (allUsers, master) => {
   allUsers.forEach((user =>
-    RP(spotify.setPlaybackOptions(user, master, config.PLAYBACK_DELAY))
+    RP(SpotifyService.setPlaybackOptions(user, master, config.PLAYBACK_DELAY))
       .catch(e => console.log(e.message))));
 };
 
@@ -293,7 +273,7 @@ const pollUsersPlayback = () => {
 
 const checkCurrentTrack = (user) => {
   return new Promise(function (resolve, reject) {
-    return RP(spotify.getPlaybackOptions(user)).then((res) => {
+    return RP(SpotifyService.getPlaybackOptions(user)).then((res) => {
       const master_ref = {
         track_uri: res.item.uri,
         track_name: res.item.name,
@@ -309,14 +289,6 @@ const checkCurrentTrack = (user) => {
   });
 };
 
-const getRoom = (roomId) => {
-  let room_index = rooms.findIndex(x => x.roomId == roomId);
-  if (room_index > -1) {
-    return rooms[room_index];
-  } else {
-    return false;
-  }
-};
 
 // START SERVER AND SOCKET
 const app = express()
@@ -343,7 +315,7 @@ wss.on('connection', function connection(ws) {
           message: message_rec.message,
           roomId: message_rec.roomId
         }); break;
-      case 'close': removeUser(message_rec.roomId, message_rec.id); break;
+      case 'close': RoomService.removeUser(rooms, message_rec.roomId, message_rec.id); break;
       default: break;
     }
   });
