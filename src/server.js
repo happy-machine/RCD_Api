@@ -81,6 +81,7 @@ const getCurrentUser = (token, users, host) => {
 };
 
 const removeUser = (roomId, token, res) => {
+  console.log('trying to remove user in removeUser function')
   let room_index = rooms.findIndex(x => x.roomId == roomId);
   let user_index = rooms[room_index].users.findIndex(x => x.token == token);
   if(room_index > -1 && user_index > -1){
