@@ -230,7 +230,8 @@ router.get('/resetserver', function (req, res) {
 
 
 const syncToMaster = (host, users, roomId) => {
-  if (host.id && users.length) {
+  if (host.id && users) {
+    console.log(host.id, users.length)
     let _allRoomUsers = [...users, host];
     let _room = roomService.getRoom(roomId);
     let _master = {};
@@ -277,7 +278,7 @@ const syncToMaster = (host, users, roomId) => {
           .catch(e => console.log('Error in sync to master ', e.message))
       });
   } else {
-    // console.log('only one user in the room');
+    console.log('only one user in the room');
   }
 };
 
