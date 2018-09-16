@@ -2,22 +2,25 @@
 require('dotenv').config();
 const config = require('./config');
 
-module.exports = {
+function RoomService(rooms) {
+    var _rooms = rooms;
 
-    getRoom: (rooms, roomId) => {
-        let room_index = rooms.findIndex(x => x.roomId == roomId);
-        if (room_index > -1) {
-            return rooms[room_index];
+    // GET ROOM BY ID
+    RoomService.prototype.getRoom = (roomId) => {
+        let roomIndex = _rooms.findIndex(x => x.roomId == roomId);
+        if (roomIndex > -1) {
+            return _rooms[roomIndex];
         } else {
             return false;
         }
     },
 
-    removeUser: (rooms, roomId, id, res) => {
-        let room_index = rooms.findIndex(x => x.roomId == roomId);
-        let user_index = rooms[room_index].users.findIndex(x => x.id == id);
-        if (room_index > -1 && user_index > -1) {
-          rooms[room_index].users.splice(user_index, 1);
+    // REMOVE USER FROM ROOM
+    RoomService.prototype.removeUser = (roomId, userId) => {
+        let roomIndex = module.exports.getRoomIndexById(roomId);
+        let userIndex = _rooms[roomIndex].users.findIndex(x => x.id == userId);
+        if (roomIndex > -1 && userIndex > -1) {
+            _rooms[roomIndex].users.splice(userIndex, 1);
           console.log('user removed');
           //TODO: STOP PLAYBACK FOR REMOVED USER?
           // RP(SpotifyService.stopPlayback(token)).then((response)=>{
@@ -25,25 +28,54 @@ module.exports = {
           // })
           // .catch(e => console.log(e.message));
         }
-        else if (rooms[room_index].host.id === id) {
+        else if (_rooms[roomIndex].host.id === userId) {
           console.log('user is current host');
           //TODO: REMOVE HOST AND ALL USERS?
-          res.json(true);
+          return true;
         } else {
           console.log('room or user could not be found');
-          res.json(false);
+          return false;
         }
       },
 
-      userInRoom: (rooms, roomId, userId) => {
-        let room_index = rooms.findIndex(x => x.roomId == roomId);
-        let user_index = rooms[room_index].users.findIndex(x => x.id == userId);
-        if (room_index > -1 && user_index > -1) {
+      // BOOLEAN IS USER IN ROOM?
+      RoomService.prototype.userInRoom = (roomId, userId) => {
+        let roomIndex = module.exports.getRoomIndexById(roomId);
+        let userIndex = _rooms[roomIndex].users.findIndex(x => x.id == userId);
+        if (roomIndex > -1 && userIndex > -1) {
             return true;
         } else {
             return false;
         }
+      },
+
+      // CREATE A NEW ROOM
+      RoomService.prototype.createRoom = (newRoom) => {
+        _rooms.push({ roomId: newRoom.roomId, host: newRoom.host, users: [], master: {} });
+      },
+
+      // ADD USER TO ROOM
+      RoomService.prototype.addUserToRoom = (roomId, newUser) => {
+          let roomIndex = module.exports.getRoomIndexById(roomId);
+        _rooms[roomIndex].users.push(newUser);
+      },
+
+      // GET ALL ROOMS
+      RoomService.prototype.getAllRooms = () => {
+          return _rooms;
+      },
+
+      // GET ROOM INDEX BY ID
+      RoomService.getRoomIndexById = (roomId) => {
+          console.log(_rooms.findIndex(x => x.roomId == roomId) > -1 ? _rooms[_rooms.findIndex(x => x.roomId == roomId)] : false);
+        return _rooms.findIndex(x => x.roomId == roomId) > -1 ? _rooms.findIndex(x => x.roomId == roomId) : false; 
+      },
+
+      // UPDATE ROOM MASTER
+      RoomService.prototype.updateMaster = (roomId, master) => {
+        let roomIndex = module.exports.getRoomIndexById(roomId);
+        _rooms[roomIndex].master = master;
       }
+}
 
-
-};
+module.exports = RoomService;

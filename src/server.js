@@ -52,7 +52,6 @@ let master = {
   album_cover: null,
 };
 const host = { token: null, name: null, id: null };
-let rooms = [];
 let system_message_buffer = JSON.stringify({
   type: '',
   user_object: {},
@@ -67,6 +66,9 @@ let message_buffer = JSON.stringify({
   message: 'test',
   roomId: null
 });
+
+// Instantiate rooms
+var roomService = new RoomService(new Array());
 
 
 
@@ -105,8 +107,9 @@ router.get('/callback', function (req, res) {
             host.name = defaultNameCheck(user_details.display_name);
             host.id = user_details.id;
             let roomId = generateRandomString(8);
-            console.log('creating room for host: ', roomId)
-            rooms.push({ roomId: roomId, host: host, users: [], master: {} });
+            console.log('creating room for host: ', roomId);
+            roomService.createRoom({ roomId: roomId, host: host});
+            
             system_message_buffer = makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, {}, CONNECTION, roomId);
             res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name })));
             pollUsersPlayback();
@@ -132,9 +135,8 @@ router.get('/guestcallback', function (req, res) {
     res.clearCookie(config.STATE_KEY);
 
 
-    if (RoomService.getRoom(rooms, roomId)) {
-      let _room = RoomService.getRoom(rooms, roomId);
-      let _roomIndex = rooms.findIndex(x => x.roomId == roomId);
+    if (roomService.getRoom(roomId)) {
+      let _room = roomService.getRoom(roomId);
       RP.post(SpotifyService.authOptions(urls.GUEST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
         if (!error && response.statusCode === 200) {
           let newUser = {};
@@ -152,9 +154,9 @@ router.get('/guestcallback', function (req, res) {
             })
             .then(() => {
               // find room and add user
-              rooms[_roomIndex].users.push(newUser);
+              roomService.addUserToRoom(roomId, newUser);
               res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name })))
-              wss.send(makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, rooms[_roomIndex].master, CONNECTION, roomId))
+              wss.send(makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, _room.master, CONNECTION, roomId));
             })
             .catch(e => {
               res.redirect(URLfactory('guest_sync', ERROR))
@@ -176,29 +178,30 @@ router.get('/guestcallback', function (req, res) {
 // Remove user from room
 router.get('/removeuser', function (req, res) {
   console.log('attempting to remove user');
-  const id = req.query.id || null;
+  const userId = req.query.id || null;
   const roomId = req.query.roomId || null;
   const state = req.query.state || null;
-  RoomService.removeUser(rooms, roomId, id, res)
+  roomService.removeUser(roomId, userId);
 });
 
 // Get current track for room (I FIXED THIS)
 router.get('/getcurrenttrack', function (req, res) {
-  const _roomId = req.query.roomId;
-  let _roomIndex = rooms.findIndex(x => x.roomId == _roomId);
-  if (_roomIndex > -1) {
-    res.json(rooms[_roomIndex].master || null);
+  const roomId = req.query.roomId;
+  let roomIndex = rooms.findIndex(x => x.roomId == roomId);
+  if (roomIndex > -1) {
+    res.json(rooms[roomIndex].master || null);
   }
 });
 
 // Get rooms 
 router.get('/getrooms', function (req, res) {
+  var rooms = roomService.getAllRooms();
   res.json(rooms || null);
 });
 
 // RESET
 router.get('/resetserver', function (req, res) {
-  rooms = [];
+  var roomService = new RoomService(new Array());
   res.json(true);
 });
 
@@ -206,23 +209,24 @@ router.get('/resetserver', function (req, res) {
 const syncToMaster = (host, users, roomId) => {
   if (host.id && users.length) {
     let _allRoomUsers = [...users, host];
-    let _roomIndex = rooms.findIndex(x => x.roomId == roomId);
+    let _room = roomService.getRoom(roomId);
     let _master = {};
     // make reference to users, leave global users array immutable
     _allRoomUsers.some(
       (user) => {
-        console.log('in sync at at user ', user.name, 'master track is ', rooms[_roomIndex].master.track_uri);
+        console.log('in sync at at user ', user.name, 'master track is ', _room.master.track_uri);
         wait_promise(350)
           .then(() => checkCurrentTrack(user))
           .then(result => {
-            if (result.track_uri !== rooms[_roomIndex].master.track_uri) {
+            if (result.track_uri !== _room.master.track_uri) {
               // Check users current track, if URI is different to one in master state ...
               _master = result;
-              console.log('master switched to ', _master.track_uri)
+              console.log('master switched to ', _master.track_uri);
               return RP(SpotifyService.getTrack(user, _master.track_uri.split('track:')[1]))
                 .then((track) => {
                   _master.album_cover = track.album.images[0].url;
-                  rooms[_roomIndex].master = _master;
+                  roomService.updateMaster(roomId, _master);
+                  
                   /* get the new tracks cover image and set the master to the new track that is taking over
                   then set the system message buffer to send update info to the client */
                   system_message_buffer = makeBuffer(
@@ -240,7 +244,7 @@ const syncToMaster = (host, users, roomId) => {
                   // });
                   /* remove the current user from the reference to the array of users
                   and then run through all the remaining users setting their track details to master */
-                  _allRoomUsers.splice(allRoomUsers.indexOf(user), 1);
+                  _allRoomUsers.splice(_allRoomUsers.indexOf(user), 1);
                   console.log(' and now all users to send sync to are ', _allRoomUsers);
                   resync(_allRoomUsers, _master);
                   return true;
@@ -263,6 +267,7 @@ const resync = (allUsers, master) => {
 // polling loop at 350ms
 const pollUsersPlayback = () => {
   setInterval(() => {
+    let rooms = roomService.getAllRooms();
     rooms.forEach(
       (room) => {
         console.log('sending poll signal');
@@ -315,7 +320,7 @@ wss.on('connection', function connection(ws) {
           message: message_rec.message,
           roomId: message_rec.roomId
         }); break;
-      case 'close': RoomService.removeUser(rooms, message_rec.roomId, message_rec.id); break;
+      case 'close': roomService.removeUser(message_rec.roomId, message_rec.id); break;
       default: break;
     }
   });
