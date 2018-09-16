@@ -344,6 +344,9 @@ wss.on('connection', function connection(ws) {
           message: message_rec.message,
           roomId: message_rec.roomId
         }); break;
+      case 'playback':
+        RP(SpotifyService.setPlaybackOptions(message_rec, message_rec, 0))
+        .catch(e => console.log(e.message));break;
       case 'close': roomService.removeUser(message_rec.roomId, message_rec.id); break;
       default: break;
     }
