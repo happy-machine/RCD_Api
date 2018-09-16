@@ -94,6 +94,7 @@ const removeUser = (roomId, token, res) => {
     // .catch(e => console.log(e.message));
   }
   else if (rooms[room_index].host.token === token){
+     rooms[room_index] = {}
     console.log('user is current host');
     //TODO: REMOVE HOST AND ALL USERS?
     res && res.json(true);
