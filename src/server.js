@@ -71,6 +71,29 @@ let message_buffer = JSON.stringify({
 var roomService = new RoomService(new Array());
 
 
+const removeUser = (roomId, token, res) => {
+  console.log('trying to remove user in removeUser function')
+  let room_index = rooms.findIndex(x => x.roomId == roomId);
+  let user_index = rooms[room_index].users.findIndex(x => x.token == token);
+  if(room_index > -1 && user_index > -1){
+    rooms[room_index].users.splice(user_index, 1);
+    console.log('user removed');
+    //TODO: STOP PLAYBACK FOR REMOVED USER?
+    // RP(spotify.stopPlayback(token)).then((response)=>{
+    //   res.json(true);
+    // })
+    // .catch(e => console.log(e.message));
+  }
+  else if (rooms[room_index].host.token === token){
+     rooms[room_index] = {}
+    console.log('user is current host');
+    //TODO: REMOVE HOST AND ALL USERS?
+    res && res.json(true);
+  }else{
+    console.log('room or user could not be found');
+    res && res.json(false);
+  }
+}
 
 // Endpoints 
 // Host login
