@@ -25,18 +25,36 @@ module.exports = {
     },
       
     setPlaybackOptions: (user, master, delay = 1) => {  
-    return {
-            method: 'PUT',
-            uri: 'https://api.spotify.com/v1/me/player/play',
-            headers: { 'Authorization': 'Bearer ' + user.token },
-            json: true ,
-            body: {
-                "uris": [master.track_uri],
-                "position_ms": master.play_position - delay
+        return {
+                method: 'PUT',
+                uri: 'https://api.spotify.com/v1/me/player/play',
+                headers: { 'Authorization': 'Bearer ' + user.token },
+                json: true ,
+                body: {
+                    "uris": [master.track_uri],
+                    "position_ms": master.play_position - delay
+                }
             }
-        }
+    },
+
+    setPause: (user) => {  
+        return {
+                method: 'PUT',
+                uri: 'https://api.spotify.com/v1/me/player/pause',
+                headers: { 'Authorization': 'Bearer ' + user.token },
+                json: true 
+            }
     },
       
+    setPlay: (user) => {  
+        return {
+                method: 'PUT',
+                uri: 'https://api.spotify.com/v1/me/player/play',
+                headers: { 'Authorization': 'Bearer ' + user.token },
+                json: true 
+            }
+    },
+    
     authOptions: (redirect_uri, code) => {
         return {
             url: 'https://accounts.spotify.com/api/token',

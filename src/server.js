@@ -238,7 +238,7 @@ const syncToMaster = (host, users, roomId) => {
     // make reference to users, leave global users array immutable
     _allRoomUsers.some(
       (user) => {
-        console.log('in sync at at user ', user.name, 'master track is ', _room.master.track_uri);
+        // console.log('in sync at at user ', user.name, 'master track is ', _room.master.track_uri);
         wait_promise(350)
           .then(() => checkCurrentTrack(user))
           .then(result => {
@@ -294,7 +294,7 @@ const pollUsersPlayback = () => {
     let rooms = roomService.getAllRooms();
     rooms.forEach(
       (room) => {
-        console.log('sending poll signal');
+        // console.log('sending poll signal');
         syncToMaster(room.host, room.users, room.roomId);
       });
   }, 1000);
@@ -345,8 +345,19 @@ wss.on('connection', function connection(ws) {
           roomId: message_rec.roomId
         }); break;
       case 'playback':
-        RP(SpotifyService.setPlaybackOptions(message_rec, message_rec, 0))
-        .catch(e => console.log(e.message));break;
+        if (message_rec.message === "play_new") {
+          console.log('PLAY NEW TRACK!')
+          RP(SpotifyService.setPlaybackOptions(message_rec, message_rec, 0))
+          .catch(e => console.log(e.message))
+        } else if (message_rec.message === "pause") {
+          console.log('PAUSING!!!')
+          RP(SpotifyService.setPause(message_rec))
+          .catch(e => console.log(e.message))
+        } else if (message_rec.message === "play"){
+          console.log('RESTART PLAY!')
+          RP(SpotifyService.setPlay(message_rec))
+          .catch(e => console.log(e.message))
+        }; break;
       case 'close': roomService.removeUser(message_rec.roomId, message_rec.id); break;
       default: break;
     }
