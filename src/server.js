@@ -350,15 +350,15 @@ wss.on('connection', function connection(ws) {
           RP(SpotifyService.setPlaybackOptions(message_rec, message_rec, 0))
           .catch(e => console.log(e.message))
         } else if (message_rec.message === "pause") {
-          console.log('PAUSING!!!')
           RP(SpotifyService.setPause(message_rec))
           .catch(e => console.log(e.message))
         } else if (message_rec.message === "play"){
-          console.log('RESTART PLAY!')
           RP(SpotifyService.setPlay(message_rec))
           .catch(e => console.log(e.message))
         }; break;
-      case 'close': roomService.removeUser(message_rec.roomId, message_rec.id); break;
+      case 'close': roomService.removeUser(message_rec.roomId, message_rec.id); 
+      system_message_buffer = JSON.stringify({type: CONNECTION, message:`${message_rec.userName} left the room.`, roomId: message_rec.roomId});
+      break;
       default: break;
     }
   });
