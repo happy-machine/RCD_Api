@@ -135,11 +135,17 @@ router.get('/guestcallback', function (req, res) {
               return RP(SpotifyService.setPlaybackOptions(newUser, _currentTrack, config.PLAYBACK_DELAY));
             })
             .then(() => {
-              // find room and add user
-              roomService.addUserToRoom(roomId, newUser);
-              sendMessage(makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, _room.master, CONNECTION, roomId));
-              res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name })));
-              
+              // Check user isn't already in the room
+              if(!roomService.userInRoom(roomId, newUser.id)){
+                roomService.addUserToRoom(roomId, newUser);
+                sendMessage(makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, _room.master, CONNECTION, roomId));
+                res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name })));
+              }else{
+                //User is rejoining so update token just incase it changed
+                roomService.updateUserToRoom(roomId, newUser);
+                sendMessage(makeBuffer(`${defaultNameCheck(newUser.name)} rejoined the party...`, newUser, _room.master, CONNECTION, roomId));
+                res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name })));
+              }  
             })
             .catch(e => {
               res.redirect(URLfactory('guest_sync', ERROR));
