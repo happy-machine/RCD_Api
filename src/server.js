@@ -13,7 +13,7 @@ const urls = require('./utils/urls');
 
 // IMPORTS
 import { URLfactory, defaultNameCheck, generateRandomString, wait_promise, queryStringError, makeBuffer } from './utils/tools';
-import { SELECTOR_CALLS, ERROR, SOUND_FX, MESSAGE, PLAYBACK, CONNECTION, TRACK_CHANGE } from './utils/constants';
+import { SELECTOR_CALLS, ERROR, SOUND_FX, MESSAGE, PLAYBACK, CONNECTION, TRACK_CHANGE, CLOSE } from './utils/constants';
 
 const router = express.Router();
 

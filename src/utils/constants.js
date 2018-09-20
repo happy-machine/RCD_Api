@@ -8,3 +8,4 @@ export const SOUND_FX = 'sound_fx';
 export const MESSAGE = 'message';
 export const PLAYBACK = 'playback';
 export const TRACK_CHANGE = 'track_change';
+export const CLOSE = 'close';
