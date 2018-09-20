@@ -315,7 +315,7 @@ wss.on('connection', function connection(ws) {
         } break;
       case SOUND_FX:
         sendMessage(JSON.stringify({type: SOUND_FX, message:`${message.userName} ${message.message}`, sample: message.sample,
-        roomId: message_rec.roomId, category: message_rec.category}))
+        roomId: message.roomId, category: message.category}))
         break;
       case CLOSE: roomService.removeUser(message.roomId, message.id);
         sendMessage(JSON.stringify({ type: CONNECTION, message: `${message.userName} left the room.`, roomId: message.roomId }));
