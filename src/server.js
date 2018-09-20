@@ -13,7 +13,7 @@ const urls = require('./utils/urls');
 
 // IMPORTS
 import { URLfactory, defaultNameCheck, generateRandomString, wait_promise, queryStringError, makeBuffer } from './utils/tools';
-import { SELECTOR_CALLS, ERROR, MODE, CONNECTION } from './utils/constants';
+import { SELECTOR_CALLS, ERROR, SOUND_FX, MESSAGE, PLAYBACK, CONNECTION, TRACK_CHANGE } from './utils/constants';
 
 const router = express.Router();
 
@@ -259,7 +259,7 @@ const syncToMaster = (host, users, roomId) => {
                       ${_master.track_name}!!`,
                     user,
                     _master,
-                    'track_change',
+                    TRACK_CHANGE,
                     roomId
                   );
                   console.log('changing system buffer message')
@@ -328,26 +328,25 @@ const app = express()
 wss = new SocketServer({ server: app, path: "/socket" });
 
 wss.on('connection', function connection(ws) {
-  console.log('ws connected')
   ws.on('message', function (message) {
     if (JSON.parse(message) !== '.') {
       console.log('got message', JSON.parse(message))
-      console.log(wss.clients.entries().length, ' connections')
     }
     var message_rec = JSON.parse(message);
     switch (message_rec.type) {
-      case 'message':
+      case MESSAGE:
         message_buffer = JSON.stringify({
-          type: 'message',
+          type: MESSAGE,
           userName: message_rec.userName || 'DJ Unknown',
           master_object: master,
           message: message_rec.message,
           roomId: message_rec.roomId
         }); break;
-      case 'playback':
+
+      case PLAYBACK:
         if (message_rec.message === "play_new") {
-          console.log('PLAY NEW TRACK!')
           RP(SpotifyService.setPlaybackOptions(message_rec, message_rec, 0))
+          .then(()=>{console.log('sent play change request to ', message_rec.track_uri)})
           .catch(e => console.log(e.message))
         } else if (message_rec.message === "pause") {
           RP(SpotifyService.setPause(message_rec))
@@ -356,8 +355,15 @@ wss.on('connection', function connection(ws) {
           RP(SpotifyService.setPlay(message_rec))
           .catch(e => console.log(e.message))
         }; break;
+
+      case SOUND_FX:
+        system_message_buffer = 
+        JSON.stringify({type: SOUND_FX, message:`${message_rec.userName} ${message_rec.message}`, sample: message_rec.sample,
+        roomId: message_rec.roomId, category: message_rec.category}); break;
+
       case 'close': roomService.removeUser(message_rec.roomId, message_rec.id); 
-      system_message_buffer = JSON.stringify({type: CONNECTION, message:`${message_rec.userName} left the room.`, roomId: message_rec.roomId});
+        system_message_buffer = 
+        JSON.stringify({type: CONNECTION, message:`${message_rec.userName} left the room.`, roomId: message_rec.roomId});
       break;
       default: break;
     }

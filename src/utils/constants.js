@@ -4,3 +4,7 @@ export const DEPLOY = 'DEPLOY';
 export const LOCAL = 'LOCAL';
 export const MODE = 'MODE';
 export const CONNECTION = 'connection';
+export const SOUND_FX = 'sound_fx';
+export const MESSAGE = 'message';
+export const PLAYBACK = 'playback';
+export const TRACK_CHANGE = 'track_change';
