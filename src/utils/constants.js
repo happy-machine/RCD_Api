@@ -2,6 +2,7 @@ export const SELECTOR_CALLS = ['drew', 'dropped', 'pulled it up and played', 're
 export const ERROR = 'ERROR';
 export const DEPLOY = 'DEPLOY';
 export const LOCAL = 'LOCAL';
+export const REMOTE = 'REMOTE';
 export const MODE = 'MODE';
 export const CONNECTION = 'connection';
 export const SOUND_FX = 'sound_fx';

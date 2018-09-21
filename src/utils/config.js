@@ -1,5 +1,5 @@
 require('dotenv').config();
-import {DEPLOY, LOCAL} from './constants'
+import {DEPLOY, LOCAL, REMOTE} from './constants'
 
 const config = {
     CLIENT_ID: process.env.CLIENT_ID || 'e37f4ec0f332475a897c624671c5449d',
