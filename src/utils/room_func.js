@@ -17,6 +17,7 @@ function RoomService(rooms) {
 
     // REMOVE USER FROM ROOM
     RoomService.prototype.removeUser = (roomId, userId) => {
+      console.log(roomId, userId);
       let roomIndex = module.exports.getRoomIndexById(roomId);
       let userIndex = _rooms[roomIndex].users.findIndex(x => x.id == userId);
       if (roomIndex > -1 && userIndex > -1) {
