@@ -8,13 +8,13 @@ export const URLfactory = (endpoint, error = false, port = config.CLIENT_PORT, m
         if (error) {
             return urls.URL_ROOT[mode] + '/error?error=' + endpoint;
         } else {
-            return urls.URL_ROOT[mode] + '/' + endpoint + '/';
+            return urls.URL_ROOT[mode] + '/' + endpoint;
         }
     } else {
         if (error) {
             return urls.URL_ROOT[mode] + port + '/error?error=' + endpoint;
         } else {
-            return urls.URL_ROOT[mode] + port + '/' + endpoint + '/';
+            return urls.URL_ROOT[mode] + port + '/' + endpoint;
         }
     }
 }

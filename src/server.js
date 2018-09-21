@@ -94,7 +94,7 @@ router.get('/callback', function (req, res) {
             let roomId = generateRandomString(8);
             console.log('creating room for host: ', roomId);
             roomService.createRoom({ roomId: roomId, host: host });
-            res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name })));
+            res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name, userId: host.id })));
             sendMessage(makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, {}, CONNECTION, roomId));
             pollUsersPlayback();
           })
@@ -136,16 +136,16 @@ router.get('/guestcallback', function (req, res) {
             })
             .then(() => {
               // Check user isn't already in the room
-              if(!roomService.userInRoom(roomId, newUser.id)){
+              if (!roomService.userInRoom(roomId, newUser.id)) {
                 roomService.addUserToRoom(roomId, newUser);
                 sendMessage(makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, _room.master, CONNECTION, roomId));
-                res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name })));
-              }else{
+                res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name, userId: newUser.id })));
+              } else {
                 //User is rejoining so update token just incase it changed
                 roomService.updateUserToRoom(roomId, newUser);
                 sendMessage(makeBuffer(`${defaultNameCheck(newUser.name)} rejoined the party...`, newUser, _room.master, CONNECTION, roomId));
-                res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name })));
-              }  
+                res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name, userId: newUser.id })));
+              }
             })
             .catch(e => {
               res.redirect(URLfactory('guest_sync', ERROR));
@@ -314,10 +314,14 @@ wss.on('connection', function connection(ws) {
             .catch(e => console.log(e.message));
         } break;
       case SOUND_FX:
-        sendMessage(JSON.stringify({type: SOUND_FX, message:`${message.userName} ${message.message}`, sample: message.sample,
-        roomId: message.roomId, category: message.category}))
+        sendMessage(JSON.stringify({
+          type: SOUND_FX, message: `${message.userName} ${message.message}`, sample: message.sample,
+          roomId: message.roomId, category: message.category
+        }));
         break;
-      case CLOSE: roomService.removeUser(message.roomId, message.id);
+      case CLOSE: roomService.removeUser(message.roomId, message.userId);
+        RP(SpotifyService.setPause(message))
+          .catch(e => console.log(e.message));
         sendMessage(JSON.stringify({ type: CONNECTION, message: `${message.userName} left the room.`, roomId: message.roomId }));
         break;
       default: break;
