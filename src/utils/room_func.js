@@ -72,7 +72,6 @@ function RoomService(rooms) {
 
     // GET ALL ROOMS
     RoomService.prototype.getAllRooms = () => {
-      console.log('rooms: ', _rooms)
       return _rooms;
     },
 

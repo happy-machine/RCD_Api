@@ -13,8 +13,9 @@ const urls = {
     URL_ROOT: {
         DEPLOY: 'https://robots-cant-dance.herokuapp.com',
         LOCAL: 'http://localhost:',
-        DEPLOY: '127.0.0.1://robots-cant-dance.herokuapp.com',
+        REMOTE: '127.0.0.1://robots-cant-dance.herokuapp.com',
     }
 };
 
 module.exports = urls;
+
