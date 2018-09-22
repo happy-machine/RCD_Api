@@ -148,7 +148,7 @@ router.get('/guestcallback', function (req, res) {
               }
             })
             .catch(e => {
-              res.redirect(URLfactory('guest_sync', ERROR));
+              res.redirect(URLfactory(JSON.stringift(e.error.message), ERROR));
               console.log('Error in guest sync ', e);
             });
         } else {
@@ -285,7 +285,6 @@ const app = express()
 wss = new SocketServer({ server: app, path: "/socket" });
 
 wss.on('connection', function connection(ws) {
-  console.log('ws connected');
   ws.on('message', function (messageData) {
     if (JSON.parse(messageData) !== '.') {
       console.log('got message', JSON.parse(messageData));
