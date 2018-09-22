@@ -99,7 +99,7 @@ router.get('/callback', function (req, res) {
             pollUsersPlayback();
           })
           .catch(e => {
-            res.redirect(URLfactory('getting_host_options', ERROR));
+            res.redirect(URLfactory(e.error.error.message, ERROR));
             console.log('Getting host options ', e);
           });
       } else {
@@ -148,7 +148,7 @@ router.get('/guestcallback', function (req, res) {
               }
             })
             .catch(e => {
-              res.redirect(URLfactory(JSON.stringift(e.error.message), ERROR));
+              res.redirect(URLfactory(e.error.error.message + JSON.stringify(', Check you have a premium account and your Spotify app is open.'), ERROR));
               console.log('Error in guest sync ', e);
             });
         } else {
