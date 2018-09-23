@@ -10,3 +10,4 @@ export const MESSAGE = 'message';
 export const PLAYBACK = 'playback';
 export const TRACK_CHANGE = 'track_change';
 export const CLOSE = 'close';
+export const REFRESH_TOKEN = 'refresh_token'

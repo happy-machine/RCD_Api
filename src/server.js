@@ -12,7 +12,7 @@ const config = require('./utils/config');
 const urls = require('./utils/urls');
 
 // IMPORTS
-import { URLfactory, defaultNameCheck, generateRandomString, wait_promise, queryStringError, makeBuffer } from './utils/tools';
+import { URLfactory, defaultNameCheck, generateRandomString, wait_promise, queryStringError, makeBuffer, makeTokenExpiry } from './utils/tools';
 import { SELECTOR_CALLS, ERROR, SOUND_FX, MESSAGE, PLAYBACK, CONNECTION, TRACK_CHANGE, CLOSE } from './utils/constants';
 
 const router = express.Router();
@@ -85,10 +85,13 @@ router.get('/callback', function (req, res) {
     RP.post(SpotifyService.authOptions(urls.HOST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
       if (!error && response.statusCode === 200) {
         host.token = body.access_token;
+        host.refresh_token = body.refresh_token
+        host.token_expiry = makeTokenExpiry(body.expires_in)
         /* get user details and start websockets. Send greeting and token to client then start
         polling the spotify api for track changes */
-        RP(SpotifyService.getUserOptions(host))
+        SpotifyService.rpSafe(SpotifyService.getUserOptions(host), host)
           .then((user_details) => {
+            console.log('got ', user_details)
             host.name = defaultNameCheck(user_details.display_name);
             host.id = user_details.id;
             let roomId = generateRandomString(8);
@@ -123,16 +126,19 @@ router.get('/guestcallback', function (req, res) {
         if (!error && response.statusCode === 200) {
           let newUser = {};
           newUser.token = body.access_token;
-          RP(SpotifyService.getUserOptions(newUser))
+          newUser.refresh_token = body.refresh_token
+          newUser.token_expiry = makeTokenExpiry(body.expires_in)
+          SpotifyService.rpSafe((SpotifyService.getUserOptions(newUser)), newUser)
             .then(user_details => {
               console.log(`${user_details.name} trying to join.`);
               newUser.name = user_details.display_name;
               newUser.id = user_details.id;
+
               console.log(`${defaultNameCheck(newUser.name)} trying to join.`);
               return checkCurrentTrack(_room.host);
             })
             .then(_currentTrack => {
-              return RP(SpotifyService.setPlaybackOptions(newUser, _currentTrack, config.PLAYBACK_DELAY));
+              return SpotifyService.rpSafe(SpotifyService.setPlaybackOptions(newUser, _currentTrack, config.PLAYBACK_DELAY), newUser);
             })
             .then(() => {
               // Check user isn't already in the room
@@ -208,7 +214,7 @@ const syncToMaster = (host, users, roomId) => {
               // Check users current track, if URI is different to one in master state ...
               _master = result;
               console.log('master switched to ', _master.track_uri);
-              return RP(SpotifyService.getTrack(user, _master.track_uri.split('track:')[1]))
+              return SpotifyService.rpSafe(SpotifyService.getTrack(user, _master.track_uri.split('track:')[1]), user)
                 .then((track) => {
                   _master.album_cover = track.album.images[0].url;
                   roomService.updateMaster(roomId, _master);
@@ -241,7 +247,7 @@ const syncToMaster = (host, users, roomId) => {
 
 const resync = (allUsers, master) => {
   allUsers.forEach((user =>
-    RP(SpotifyService.setPlaybackOptions(user, master, config.PLAYBACK_DELAY))
+    SpotifyService.rpSafe(SpotifyService.setPlaybackOptions(user, master, config.PLAYBACK_DELAY), user)
       .catch(e => console.log(e.message))));
 };
 
@@ -259,7 +265,7 @@ const pollUsersPlayback = () => {
 
 const checkCurrentTrack = (user) => {
   return new Promise(function (resolve, reject) {
-    return RP(SpotifyService.getPlaybackOptions(user)).then((res) => {
+    return SpotifyService.rpSafe(SpotifyService.getPlaybackOptions(user), user).then((res) => {
       const master_ref = {
         track_uri: res.item.uri,
         track_name: res.item.name,
@@ -288,7 +294,7 @@ wss.on('connection', function connection(ws) {
   ws.on('message', function (messageData) {
     if (JSON.parse(messageData) !== '.') {
       console.log('got message', JSON.parse(messageData));
-      console.log(wss.clients.entries().length, ' connections');
+      console.log( wss._eventsCount, ' connections');
     }
     var message = JSON.parse(messageData);
     switch (message.type) {
@@ -302,14 +308,13 @@ wss.on('connection', function connection(ws) {
         })); break;
       case PLAYBACK:
         if (message.message === "play_new") {
-          console.log('PLAY NEW TRACK!');
-          RP(SpotifyService.setPlaybackOptions(message, message, 0))
+          SpotifyService.rpSafe(SpotifyService.setPlaybackOptions(message, message, 0), roomService.getUserFromId(message.roomId, message.userId))
             .catch(e => console.log(e.message));
         } else if (message.message === "pause") {
-          RP(SpotifyService.setPause(message))
+          SpotifyService.rpSafe(SpotifyService.setPause(message), roomService.getUserFromId(message.roomId, message.userId))
             .catch(e => console.log(e.message));
         } else if (message.message === "play") {
-          RP(SpotifyService.setPlay(message))
+          SpotifyService.rpSafe(SpotifyService.setPlay(message), roomService.getUserFromId(message.roomId, message.userId))
             .catch(e => console.log(e.message));
         } break;
       case SOUND_FX:
@@ -319,7 +324,7 @@ wss.on('connection', function connection(ws) {
         }));
         break;
       case CLOSE: roomService.removeUser(message.roomId, message.userId);
-        RP(SpotifyService.setPause(message))
+          SpotifyService.rpSafe(SpotifyService.setPause(message), roomService.getUserFromId(message.roomId, message.userId))
           .catch(e => console.log(e.message));
         sendMessage(JSON.stringify({ type: CONNECTION, message: `${message.userName} left the room.`, roomId: message.roomId }));
         break;
@@ -328,7 +333,7 @@ wss.on('connection', function connection(ws) {
   });
 });
 
-const sendMessage = (message) => {
+export const sendMessage = (message) => {
   wss.clients.forEach((client) => {
     client.send(message);
   });

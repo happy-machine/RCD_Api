@@ -57,3 +57,9 @@ export const makeBuffer = (message, user_object, master, type = 'message', roomI
         roomId: roomId
       });
 }
+
+export const makeTokenExpiry = (expiry) => {
+    let newTime = new Date().getTime();
+    let exp = (Math.floor(expiry / 60) * 7000)
+    return newTime + exp
+}

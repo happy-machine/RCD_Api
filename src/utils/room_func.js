@@ -70,6 +70,13 @@ function RoomService(rooms) {
       }
     },
 
+    // GET USER FROM ID
+    RoomService.prototype.getUserFromId = (roomId, userId) => {
+      let roomIndex = module.exports.getRoomIndexById(roomId);
+      let userIndex = _rooms[roomIndex].users.findIndex(x => x.id == userId);
+      console.log('IN ID!!! ', roomIndex, userIndex, _rooms[roomIndex].users)
+      return roomIndex > -1 && userIndex > -1 ? _rooms[roomIndex].users[userIndex] : null
+    }
     // GET ALL ROOMS
     RoomService.prototype.getAllRooms = () => {
       return _rooms;

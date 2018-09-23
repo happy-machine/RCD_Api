@@ -1,5 +1,8 @@
 /*jshint esversion: 6 */
 require('dotenv').config();
+import { sendMessage } from '../server'
+import { REFRESH_TOKEN } from './constants'
+const rp = require('request-promise');
 const config = require('./config');
 
 module.exports = {
@@ -89,4 +92,45 @@ module.exports = {
             state
         }
       } ,
+
+    rpSafe: (options, user) => {
+        return new Promise((resolve, fail) => {
+
+            if (user && user.token_expiry - new Date().getTime() <= 3000) {
+
+
+                rp.post({
+
+                    url: 'https://accounts.spotify.com/api/token',
+                    headers: {
+                        'Authorization': 'Basic ' + (new Buffer(config.CLIENT_ID  + ':' + config.CLIENT_ID).toString('base64'))
+                    },
+                    form: {
+
+                        grant_type: 'refresh_token',
+                        refresh_token: user.refresh_token
+
+                    },
+
+                    json: true
+
+                }, function (error, response, body) {
+
+                    if (!error && response.statusCode === 200) {
+                        console.log ("Refreshed Token, Will expire in: " + body.expires_in)
+                        user.token = body.access_token
+                        sendMessage(JSON.stringify({ type: REFRESH_TOKEN, token: user.token }))
+                        var exp = (Math.floor (body.expires_in / 60) * 7000)
+                        user.token_expiry = new Date().getTime() + exp
+                        resolve (rp (options))
+                    } else {
+                        fail(console.log('Error in refresh call\n'))
+                    }
+                })
+            } else {
+                resolve(rp(options))
+            }
+
+        })
+    },
 };
