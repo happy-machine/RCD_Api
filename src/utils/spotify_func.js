@@ -103,7 +103,7 @@ module.exports = {
 
                     url: 'https://accounts.spotify.com/api/token',
                     headers: {
-                        'Authorization': 'Basic ' + (new Buffer(config.CLIENT_ID  + ':' + config.CLIENT_ID).toString('base64'))
+                        'Authorization': 'Basic ' + (new Buffer(config.CLIENT_ID + ':' + config.CLIENT_SECRET).toString('base64'))
                     },
                     form: {
 
