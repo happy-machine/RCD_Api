@@ -17,7 +17,6 @@ function RoomService(rooms) {
 
     // REMOVE USER FROM ROOM
     RoomService.prototype.removeUser = (roomId, userId) => {
-      console.log(roomId, userId);
       let roomIndex = module.exports.getRoomIndexById(roomId);
       let userIndex = _rooms[roomIndex].users.findIndex(x => x.id == userId);
       if (roomIndex > -1 && userIndex > -1) {
@@ -74,7 +73,6 @@ function RoomService(rooms) {
     RoomService.prototype.getUserFromId = (roomId, userId) => {
       let roomIndex = module.exports.getRoomIndexById(roomId);
       let userIndex = _rooms[roomIndex].users.findIndex(x => x.id == userId);
-      console.log('IN ID!!! ', roomIndex, userIndex, _rooms[roomIndex].users)
       return roomIndex > -1 && userIndex > -1 ? _rooms[roomIndex].users[userIndex] : null
     }
     // GET ALL ROOMS
@@ -84,7 +82,6 @@ function RoomService(rooms) {
 
     // GET ROOM INDEX BY ID
     RoomService.getRoomIndexById = (roomId) => {
-      console.log(_rooms.findIndex(x => x.roomId == roomId) > -1 ? _rooms[_rooms.findIndex(x => x.roomId == roomId)] : false);
       return _rooms.findIndex(x => x.roomId == roomId) > -1 ? _rooms.findIndex(x => x.roomId == roomId) : false;
     },
 

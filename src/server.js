@@ -91,7 +91,6 @@ router.get('/callback', function (req, res) {
         polling the spotify api for track changes */
         SpotifyService.rpSafe(SpotifyService.getUserOptions(host), host)
           .then((user_details) => {
-            console.log('got ', user_details)
             host.name = defaultNameCheck(user_details.display_name);
             host.id = user_details.id;
             let roomId = generateRandomString(8);
@@ -200,7 +199,6 @@ router.get('/resetserver', function (req, res) {
 
 const syncToMaster = (host, users, roomId) => {
   if (host.id && users) {
-    console.log(host.id, users.length);
     let _allRoomUsers = [...users, host];
     let _room = roomService.getRoom(roomId);
     let _master = {};
@@ -294,7 +292,7 @@ wss.on('connection', function connection(ws) {
   ws.on('message', function (messageData) {
     if (JSON.parse(messageData) !== '.') {
       console.log('got message', JSON.parse(messageData));
-      console.log( wss._eventsCount, ' connections');
+      console.log('Connections: ',wss._eventsCount);
     }
     var message = JSON.parse(messageData);
     switch (message.type) {
