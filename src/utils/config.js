@@ -2,11 +2,11 @@ require('dotenv').config();
 import {DEPLOY, LOCAL, REMOTE} from './constants'
 
 const config = {
-    CLIENT_ID: process.env.CLIENT_ID || 'e37f4ec0f332475a897c624671c5449d',
-    CLIENT_SECRET: process.env.CLIENT_SECRET || '12c9a9eaf6854037bd4c9ccfc55169cd',
+    CLIENT_ID: process.env.CLIENT_ID,
+    CLIENT_SECRET: process.env.CLIENT_SECRET,
     SERVER_PORT: process.env.PORT || 5000,
     CLIENT_PORT: 3000,
-    MODE: DEPLOY,
+    MODE: process.env.MODE,
     // Spotify
     PERMISSIONS_SCOPE: 'user-read-currently-playing user-modify-playback-state user-read-playback-state streaming user-read-private',
     STATE_KEY: 'spotify_auth_state',
