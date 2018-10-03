@@ -10,10 +10,18 @@ const SpotifyService = require('./utils/spotify_func');
 const RoomService = require('./utils/room_func');
 const config = require('./utils/config');
 const urls = require('./utils/urls');
+const PromiseThrottle = require('promise-throttle');
 
 // IMPORTS
 import { URLfactory, defaultNameCheck, generateRandomString, wait_promise, queryStringError, makeBuffer, makeTokenExpiry } from './utils/tools';
 import { SELECTOR_CALLS, ERROR, SOUND_FX, MESSAGE, PLAYBACK, CONNECTION, TRACK_CHANGE, CLOSE } from './utils/constants';
+
+const REQUEST_PER_SECOND = 3;
+
+const promiseThrottle = new PromiseThrottle({
+  requestsPerSecond: REQUEST_PER_SECOND,
+  promiseImplementation: Promise
+})
 
 const router = express.Router();
 
@@ -203,10 +211,9 @@ const syncToMaster = (host, users, roomId) => {
     let _room = roomService.getRoom(roomId);
     let _master = {};
     // make reference to users, leave global users array immutable
-    _allRoomUsers.some(
+    const promises = _allRoomUsers.map(
       (user) => {
-        wait_promise(350)
-          .then(() => checkCurrentTrack(user))
+          checkCurrentTrack(user)
           .then(result => {
             if (result.track_uri !== _room.master.track_uri) {
               // Check users current track, if URI is different to one in master state ...
@@ -238,6 +245,7 @@ const syncToMaster = (host, users, roomId) => {
           })
           .catch(e => console.log('Error in sync to master ', e.message));
       });
+      return promises;
   } else {
     console.log('only one user in the room');
   }
@@ -251,8 +259,16 @@ const resync = (allUsers, master) => {
 
 // polling loop at 350ms
 const pollUsersPlayback = () => {
+
+  let rooms = roomService.getAllRooms();
+
+  rooms.forEach((room) => {
+    const promises = syncToMaster(room.host, room.users, room.roomId)
+    promiseThrottle.addAll(promises);
+  })
+
   setInterval(() => {
-    let rooms = roomService.getAllRooms();
+
     rooms.forEach(
       (room) => {
         // console.log('sending poll signal');

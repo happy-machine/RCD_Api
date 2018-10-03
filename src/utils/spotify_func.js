@@ -1,4 +1,4 @@
-/*jshint esversion: 6 */
+q/*jshint esversion: 6 */
 require('dotenv').config();
 import { sendMessage } from '../server'
 import { REFRESH_TOKEN } from './constants'
