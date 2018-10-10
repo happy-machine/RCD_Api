@@ -15,6 +15,15 @@ module.exports = {
             json: true 
         }
     },
+
+    getUserDevices: (user) => {
+        return { 
+            method: 'GET',
+            uri: 'https://api.spotify.com/v1/me/player/devices',
+            headers: { 'Authorization': 'Bearer ' + user.token },
+            json: true 
+        }
+    },
       
     getPlaybackOptions: (user) => {
         return {
