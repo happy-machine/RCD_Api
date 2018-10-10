@@ -91,14 +91,25 @@ router.get('/callback', function (req, res) {
         polling the spotify api for track changes */
         SpotifyService.rpSafe(SpotifyService.getUserOptions(host), host)
           .then((user_details) => {
-            host.name = defaultNameCheck(user_details.display_name);
-            host.id = user_details.id;
-            let roomId = generateRandomString(8);
-            console.log('creating room for host: ', roomId);
-            roomService.createRoom({ roomId: roomId, host: host });
-            res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name, userId: host.id })));
-            sendMessage(makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, {}, CONNECTION, roomId));
-            pollUsersPlayback();
+          SpotifyService.rpSafe(SpotifyService.getUserDevices(host), host)
+            .then((user_devices) => {
+              if (!user_devices.devices.length) {
+                res.redirect(URLfactory('please open spotify in one of your devices and try again', ERROR));
+                return false;
+              }
+              host.name = defaultNameCheck(user_details.display_name);
+              host.id = user_details.id;
+              let roomId = generateRandomString(8);
+              console.log('creating room for host: ', roomId);
+              roomService.createRoom({ roomId: roomId, host: host });
+              res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name, userId: host.id })));
+              sendMessage(makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, {}, CONNECTION, roomId));
+              pollUsersPlayback();
+            })
+            .catch(e => {
+              res.redirect(URLfactory(e.error.error.message, ERROR));
+              console.log('Getting user devices ', e);
+            });
           })
           .catch(e => {
             res.redirect(URLfactory(e.error.error.message, ERROR));
@@ -129,7 +140,7 @@ router.get('/guestcallback', function (req, res) {
           newUser.token_expiry = makeTokenExpiry(body.expires_in)
           SpotifyService.rpSafe((SpotifyService.getUserOptions(newUser)), newUser)
             .then(user_details => {
-              console.log(`${user_details.name} trying to join.`);
+              console.log(`${user_details.display_name} trying to join.`);
               newUser.name = user_details.display_name;
               newUser.id = user_details.id;
 
@@ -198,49 +209,53 @@ router.get('/resetserver', function (req, res) {
 
 
 const syncToMaster = (host, users, roomId) => {
-  if (host.id && users) {
-    let _allRoomUsers = [...users, host];
-    let _room = roomService.getRoom(roomId);
-    let _master = {};
-    // make reference to users, leave global users array immutable
-    _allRoomUsers.some(
-      (user) => {
-        wait_promise(350)
-          .then(() => checkCurrentTrack(user))
-          .then(result => {
-            if (result.track_uri !== _room.master.track_uri) {
-              // Check users current track, if URI is different to one in master state ...
-              _master = result;
-              console.log('master switched to ', _master.track_uri);
-              return SpotifyService.rpSafe(SpotifyService.getTrack(user, _master.track_uri.split('track:')[1]), user)
-                .then((track) => {
-                  _master.album_cover = track.album.images[0].url;
-                  roomService.updateMaster(roomId, _master);
-                  /* get the new tracks cover image and set the master to the new track that is taking over
-                  then set the system message buffer to send update info to the client */
-                  sendMessage(makeBuffer(
-                    `${defaultNameCheck(_master.selector_name)} 
-                      ${SELECTOR_CALLS[Math.floor(Math.random() * SELECTOR_CALLS.length)]} 
-                      ${_master.track_name}!!`,
-                    user,
-                    _master,
-                    TRACK_CHANGE,
-                    roomId
-                  ));
-                  /* remove the current user from the reference to the array of users
-                  and then run through all the remaining users setting their track details to master */
-                  _allRoomUsers.splice(_allRoomUsers.indexOf(user), 1);
-                  // console.log(' and now all users to send sync to are ', _allRoomUsers);
-                  resync(_allRoomUsers, _master);
-                  return true;
-                });
-            }
-          })
-          .catch(e => console.log('Error in sync to master ', e.message));
-      });
-  } else {
-    console.log('only one user in the room');
+  if (!host.id) {
+    console.log('no host in the room');
+    return false;
   }
+  if (!users.length) {
+    console.log('no users in the room');
+    return false;
+  }
+  let _allRoomUsers = [...users, host];
+  let _room = roomService.getRoom(roomId);
+  let _master = {};
+  // make reference to users, leave global users array immutable
+  _allRoomUsers.some(
+    (user) => {
+      wait_promise(350)
+        .then(() => checkCurrentTrack(user))
+        .then(result => {
+          if (result.track_uri !== _room.master.track_uri) {
+            // Check users current track, if URI is different to one in master state ...
+            _master = result;
+            console.log('master switched to ', _master.track_uri);
+            return SpotifyService.rpSafe(SpotifyService.getTrack(user, _master.track_uri.split('track:')[1]), user)
+              .then((track) => {
+                _master.album_cover = track.album.images[0].url;
+                roomService.updateMaster(roomId, _master);
+                /* get the new tracks cover image and set the master to the new track that is taking over
+                then set the system message buffer to send update info to the client */
+                sendMessage(makeBuffer(
+                  `${defaultNameCheck(_master.selector_name)} 
+                    ${SELECTOR_CALLS[Math.floor(Math.random() * SELECTOR_CALLS.length)]} 
+                    ${_master.track_name}!!`,
+                  user,
+                  _master,
+                  TRACK_CHANGE,
+                  roomId
+                ));
+                /* remove the current user from the reference to the array of users
+                and then run through all the remaining users setting their track details to master */
+                _allRoomUsers.splice(_allRoomUsers.indexOf(user), 1);
+                // console.log(' and now all users to send sync to are ', _allRoomUsers);
+                resync(_allRoomUsers, _master);
+                return true;
+              });
+          }
+        })
+        .catch(e => console.log('Error in sync to master ', e));
+    });
 };
 
 const resync = (allUsers, master) => {
@@ -264,6 +279,9 @@ const pollUsersPlayback = () => {
 const checkCurrentTrack = (user) => {
   return new Promise(function (resolve, reject) {
     return SpotifyService.rpSafe(SpotifyService.getPlaybackOptions(user), user).then((res) => {
+      if (res === undefined) {
+          return false;
+      }
       const master_ref = {
         track_uri: res.item.uri,
         track_name: res.item.name,
