@@ -1,9 +1,4 @@
-<<<<<<< HEAD
+.DS_Store
+.env
 build
 node_modules
-.env
-=======
-/node_modules
-/build
-.DS_Store
->>>>>>> c34250a8e1e63c82c16ecfe09b5b84beeb31c20c
