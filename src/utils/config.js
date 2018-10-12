@@ -5,8 +5,8 @@ const config = {
     CLIENT_ID: process.env.CLIENT_ID,
     CLIENT_SECRET: process.env.CLIENT_SECRET,
     SERVER_PORT: process.env.PORT || 5000,
-    CLIENT_PORT: 3000,
-    MODE:process.env.MODE,
+    CLIENT_PORT: process.env.CLIENT_PORT || 3000,
+    MODE: process.env.MODE,
     // Spotify
     PERMISSIONS_SCOPE: 'user-read-currently-playing user-modify-playback-state user-read-playback-state streaming user-read-private',
     STATE_KEY: 'spotify_auth_state',

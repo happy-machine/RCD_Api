@@ -1,0 +1,3 @@
+- Test joining and leaving the room
+- Test multiple hosts and multiple users (maybe spotify tests app accounts)
+- Check performance of the websockets loops and promisses 
