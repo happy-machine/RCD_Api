@@ -15,6 +15,15 @@ function RoomService(rooms) {
     }
   },
 
+  RoomService.prototype.getRoomByHostId = (hostId) => {
+    let roomIndex = _rooms.findIndex(x => x.host && x.host.id == hostId);
+    if (roomIndex > -1) {
+      return _rooms[roomIndex];
+    } else {
+      return false;
+    }
+  },
+
     // REMOVE USER FROM ROOM
     RoomService.prototype.removeUser = (roomId, userId) => {
       let roomIndex = module.exports.getRoomIndexById(roomId);
@@ -27,6 +36,8 @@ function RoomService(rooms) {
       else if (_rooms[roomIndex].host.id === userId) {
         console.log('user is current host');
         //TODO: REMOVE HOST AND ALL USERS?
+        // _rooms[roomIndex].host = null;
+        // For now the host is not removed and can return back to same room 
         return true;
       } else {
         console.log('room or user could not be found');

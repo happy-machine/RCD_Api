@@ -109,10 +109,19 @@ router.get('/callback', function (req, res) {
             return false;
           }
           host.name = defaultNameCheck(user_details.display_name);
-          host.id = user_details.id;
-          let roomId = generateRandomString(8);
-          console.log('creating room for host: ', roomId);
-          roomService.createRoom({ roomId: roomId, host: host });
+          /* namespacing host.id with HOST to be able to
+           * simulate being host and user at the same time */
+          host.id = 'HOST' + user_details.id;
+          var hostRoom = roomService.getRoomByHostId(host.id);
+          if (hostRoom) {
+            console.log('found host room ' + hostRoom.roomId);
+            var roomId = hostRoom.roomId;
+          }
+          else {
+            var roomId = generateRandomString(8);
+            console.log('creating room for host: ', roomId);
+            roomService.createRoom({ roomId: roomId, host: host });
+          }
           res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name, userId: host.id })));
           sendMessage(JSON.stringify({
             type: constants.CONNECTION,
@@ -123,13 +132,13 @@ router.get('/callback', function (req, res) {
           }));
         })
         .catch(e => {
-          res.redirect(URLfactory(e.error.error.message, constants.ERROR));
           console.log('Getting user devices ', e);
+          res.redirect(URLfactory(e, constants.ERROR));
         });
       })
       .catch(e => {
-        res.redirect(URLfactory(e.error.error.message, constants.ERROR));
         console.log('Getting host options ', e);
+        res.redirect(URLfactory(e, constants.ERROR));
       });
   });
 });
@@ -224,7 +233,8 @@ router.get('/resetserver', function (req, res) {
 
 
 const syncToMaster = (host, users, roomId) => {
-  if (!host.id) {
+  console.log('sync to master room: ' + roomId);
+  if (!host) {
     console.log('no host in the room');
     return false;
   }
@@ -232,7 +242,7 @@ const syncToMaster = (host, users, roomId) => {
   if (!users.length) {
     console.log('no users in the room');
   }
-  console.log(users.length + ' users in  the room');
+  console.log(users.length + ' users in the room');
   let _allRoomUsers = [...users, host];
   let _room = roomService.getRoom(roomId);
   let _master = {};
@@ -378,8 +388,10 @@ wss.on('connection', function connection(ws) {
 
       case constants.CLOSE:
         var user = roomService.getUserFromId(msgData.roomId, msgData.userId);
-        SpotifyService.rpSafe(SpotifyService.setPause(msgData), user)
-          .catch(e => console.log(e.message));
+        if (user) {
+            SpotifyService.rpSafe(SpotifyService.setPause(msgData), user)
+              .catch(e => console.log(e.message));
+        }
         roomService.removeUser(msgData.roomId, msgData.userId);
         sendMessage(JSON.stringify({
           type: constants.CONNECTION,
