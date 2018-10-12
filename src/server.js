@@ -13,7 +13,7 @@ const urls = require('./utils/urls');
 
 // IMPORTS
 import { URLfactory, defaultNameCheck, generateRandomString, wait_promise, queryStringError, makeBuffer, makeTokenExpiry } from './utils/tools';
-import { SELECTOR_CALLS, ERROR, SOUND_FX, MESSAGE, PLAYBACK, CONNECTION, TRACK_CHANGE, CLOSE } from './utils/constants';
+import * as constants from './utils/constants';
 
 const router = express.Router();
 
@@ -64,17 +64,19 @@ router.get('/login', function (req, res) {
   res.cookie(config.STATE_KEY, state);
   res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(SpotifyService.spotifyOptions(urls.HOST_REDIRECT_URI[config.MODE], state))}`);
 });
+
 // Guest Login
 router.get('/invite', function (req, res) {
   const roomId = req.query.roomId;
   if (!roomService.getRoom(roomId)) {
-      res.redirect(URLfactory('This room does not exist or is already closed', ERROR));
+      res.redirect(URLfactory('This room does not exist or is already closed', constants.ERROR));
       return false;
   }
   const state = generateRandomString(16);
   res.cookie(config.STATE_KEY, state);
   res.redirect(`https://accounts.spotify.com/authorize?${querystring.stringify(SpotifyService.spotifyOptions(urls.GUEST_REDIRECT_URI[config.MODE], roomId))}`);
 });
+
 // Host Callback from spotify
 router.get('/callback', function (req, res) {
   console.log('got host callback');
@@ -83,47 +85,53 @@ router.get('/callback', function (req, res) {
   const storedState = req.headers.cookie ? req.headers.cookie.split(`${config.STATE_KEY}=`)[1] : null;
   if (state === null || state !== storedState) {
     res.redirect('/#' + queryStringError);
-  } else {
-    res.clearCookie(config.STATE_KEY);
-
-    RP.post(SpotifyService.authOptions(urls.HOST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
-      if (!error && response.statusCode === 200) {
-        host.token = body.access_token;
-        host.refresh_token = body.refresh_token
-        host.token_expiry = makeTokenExpiry(body.expires_in)
-        /* get user details and start websockets. Send greeting and token to client then start
-        polling the spotify api for track changes */
-        SpotifyService.rpSafe(SpotifyService.getUserOptions(host), host)
-          .then((user_details) => {
-          SpotifyService.rpSafe(SpotifyService.getUserDevices(host), host)
-            .then((user_devices) => {
-              if (!user_devices.devices.length) {
-                res.redirect(URLfactory('please open spotify in one of your devices and try again', ERROR));
-                return false;
-              }
-              host.name = defaultNameCheck(user_details.display_name);
-              host.id = user_details.id;
-              let roomId = generateRandomString(8);
-              console.log('creating room for host: ', roomId);
-              roomService.createRoom({ roomId: roomId, host: host });
-              res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name, userId: host.id })));
-              sendMessage(makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, {}, CONNECTION, roomId));
-            })
-            .catch(e => {
-              res.redirect(URLfactory(e.error.error.message, ERROR));
-              console.log('Getting user devices ', e);
-            });
-          })
-          .catch(e => {
-            res.redirect(URLfactory(e.error.error.message, ERROR));
-            console.log('Getting host options ', e);
-          });
-      } else {
-        res.redirect(URLfactory('spotify_host_auth', ERROR));
-        console.log('Spotify host auth ', e);
-      }
-    });
+    return false;
   }
+  res.clearCookie(config.STATE_KEY);
+  RP.post(SpotifyService.authOptions(urls.HOST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
+    if (error || response.statusCode !== 200) {
+      res.redirect(URLfactory('spotify_host_auth', constants.ERROR));
+      console.log('Spotify host auth ', error);
+      return false;
+    }
+    host.token = body.access_token;
+    host.refresh_token = body.refresh_token
+    host.token_expiry = makeTokenExpiry(body.expires_in)
+    /* get user details and start websockets.
+     * Send greeting and token to client then start
+     * polling the spotify api for track changes */
+    SpotifyService.rpSafe(SpotifyService.getUserOptions(host), host)
+      .then((user_details) => {
+      SpotifyService.rpSafe(SpotifyService.getUserDevices(host), host)
+        .then((user_devices) => {
+          if (!user_devices.devices.length) {
+            res.redirect(URLfactory('please open spotify in one of your devices and try again', constants.ERROR));
+            return false;
+          }
+          host.name = defaultNameCheck(user_details.display_name);
+          host.id = user_details.id;
+          let roomId = generateRandomString(8);
+          console.log('creating room for host: ', roomId);
+          roomService.createRoom({ roomId: roomId, host: host });
+          res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name, userId: host.id })));
+          sendMessage(JSON.stringify({
+            type: constants.CONNECTION,
+            message: defaultNameCheck(host.name) + ' stepped up to the 1210s...',
+            user_object: host,
+            master_object: {},
+            roomId: roomId
+          }));
+        })
+        .catch(e => {
+          res.redirect(URLfactory(e.error.error.message, constants.ERROR));
+          console.log('Getting user devices ', e);
+        });
+      })
+      .catch(e => {
+        res.redirect(URLfactory(e.error.error.message, constants.ERROR));
+        console.log('Getting host options ', e);
+      });
+  });
 });
 // Guest callback from Spotify
 router.get('/guestcallback', function (req, res) {
@@ -131,55 +139,59 @@ router.get('/guestcallback', function (req, res) {
   const roomId = req.query.state || null;
   if (!code || !roomId) {
     res.redirect('/#' + queryStringError);
-  } else {
-    res.clearCookie(config.STATE_KEY);
-    if (roomService.getRoom(roomId)) {
-      let _room = roomService.getRoom(roomId);
-      RP.post(SpotifyService.authOptions(urls.GUEST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
-        if (!error && response.statusCode === 200) {
-          let newUser = {};
-          newUser.token = body.access_token;
-          newUser.refresh_token = body.refresh_token
-          newUser.token_expiry = makeTokenExpiry(body.expires_in)
-          SpotifyService.rpSafe((SpotifyService.getUserOptions(newUser)), newUser)
-            .then(user_details => {
-              console.log(`${user_details.display_name} trying to join.`);
-              newUser.name = user_details.display_name;
-              newUser.id = user_details.id;
-
-              console.log(`${defaultNameCheck(newUser.name)} trying to join.`);
-              return checkCurrentTrack(_room.host);
-            })
-            .then(_currentTrack => {
-              return SpotifyService.rpSafe(SpotifyService.setPlaybackOptions(newUser, _currentTrack, config.PLAYBACK_DELAY), newUser);
-            })
-            .then(() => {
-              // Check user isn't already in the room
-              if (!roomService.userInRoom(roomId, newUser.id)) {
-                roomService.addUserToRoom(roomId, newUser);
-                sendMessage(makeBuffer(`${defaultNameCheck(newUser.name)} joined the party...`, newUser, _room.master, CONNECTION, roomId));
-                res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name, userId: newUser.id })));
-              } else {
-                //User is rejoining so update token just incase it changed
-                roomService.updateUserToRoom(roomId, newUser);
-                sendMessage(makeBuffer(`${defaultNameCheck(newUser.name)} rejoined the party...`, newUser, _room.master, CONNECTION, roomId));
-                res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name, userId: newUser.id })));
-              }
-            })
-            .catch(e => {
-              res.redirect(URLfactory(e.error.error.message + JSON.stringify(', Check you have a premium account and your Spotify app is open.'), ERROR));
-              console.log('Error in guest sync ', e);
-            });
-        } else {
-          res.redirect(URLfactory('guest_callback', ERROR));
-          console.log('Error in guest callback ', e);
-        }
-      });
-    } else {
-      console.log('room does not exist');
-      res.redirect('/#' + queryStringError);
-    }
+    return false;
   }
+  res.clearCookie(config.STATE_KEY);
+  let _room = roomService.getRoom(roomId);
+  if (!_room) {
+    console.log('room does not exist');
+    res.redirect('/#' + queryStringError);
+    return false;
+  }
+  RP.post(SpotifyService.authOptions(urls.GUEST_REDIRECT_URI[config.MODE], code), function (error, response, body) {
+    if (error || response.statusCode !== 200) {
+      console.log('Error in guest callback ', error);
+      res.redirect(URLfactory('guest_callback', constants.ERROR));
+      return false;
+    }
+    let newUser = {};
+    newUser.token = body.access_token;
+    newUser.refresh_token = body.refresh_token
+    newUser.token_expiry = makeTokenExpiry(body.expires_in)
+    SpotifyService.rpSafe((SpotifyService.getUserOptions(newUser)), newUser)
+      .then(user_details => {
+        console.log(user_details.display_name + ' trying to join.');
+        newUser.name = user_details.display_name;
+        newUser.id = user_details.id;
+        return checkCurrentTrack(_room.host);
+      })
+      .then(_currentTrack => {
+        return SpotifyService.rpSafe(SpotifyService.setPlaybackOptions(newUser, _currentTrack, config.PLAYBACK_DELAY), newUser);
+      })
+      .then(() => {
+        // Check user isn't already in the room
+        if (!roomService.userInRoom(roomId, newUser.id)) {
+          roomService.addUserToRoom(roomId, newUser);
+          var message = defaultNameCheck(newUser.name) + ' joined the party...';
+        } else {
+          //User is rejoining so update token just incase it changed
+          roomService.updateUserToRoom(roomId, newUser);
+          var message = defaultNameCheck(newUser.name) + ' rejoined the party...';
+        }
+        sendMessage(JSON.stringify({
+          type: constants.CONNECTION,
+          message: message,
+          user_object: newUser,
+          master_object: _room.master,
+          roomId: roomId
+        }));
+        res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name, userId: newUser.id })));
+      })
+      .catch(e => {
+        res.redirect(URLfactory(e.error.error.message + JSON.stringify(', Check you have a premium account and your Spotify app is open.'), constants.ERROR));
+        console.log('Error in guest sync ', e);
+      });
+  });
 });
 
 // Remove user from room
@@ -216,10 +228,11 @@ const syncToMaster = (host, users, roomId) => {
     console.log('no host in the room');
     return false;
   }
+  console.log('Host ' + host.id);
   if (!users.length) {
     console.log('no users in the room');
-    return false;
   }
+  console.log(users.length + ' users in  the room');
   let _allRoomUsers = [...users, host];
   let _room = roomService.getRoom(roomId);
   let _master = {};
@@ -229,33 +242,32 @@ const syncToMaster = (host, users, roomId) => {
       wait_promise(350)
         .then(() => checkCurrentTrack(user))
         .then(result => {
-          if (result.track_uri !== _room.master.track_uri) {
-            // Check users current track, if URI is different to one in master state ...
-            _master = result;
-            console.log('master switched to ', _master.track_uri);
-            return SpotifyService.rpSafe(SpotifyService.getTrack(user, _master.track_uri.split('track:')[1]), user)
-              .then((track) => {
-                _master.album_cover = track.album.images[0].url;
-                roomService.updateMaster(roomId, _master);
-                /* get the new tracks cover image and set the master to the new track that is taking over
-                then set the system message buffer to send update info to the client */
-                sendMessage(makeBuffer(
-                  `${defaultNameCheck(_master.selector_name)} 
-                    ${SELECTOR_CALLS[Math.floor(Math.random() * SELECTOR_CALLS.length)]} 
-                    ${_master.track_name}!!`,
-                  user,
-                  _master,
-                  TRACK_CHANGE,
-                  roomId
-                ));
-                /* remove the current user from the reference to the array of users
-                and then run through all the remaining users setting their track details to master */
-                _allRoomUsers.splice(_allRoomUsers.indexOf(user), 1);
-                // console.log(' and now all users to send sync to are ', _allRoomUsers);
-                resync(_allRoomUsers, _master);
-                return true;
-              });
+          if (result.track_uri === _room.master.track_uri) {
+              return false;
           }
+          // Check users current track, if URI is different to one in master state ...
+          _master = result;
+          console.log('master switched to ', _master.track_uri);
+          return SpotifyService.rpSafe(SpotifyService.getTrack(user, _master.track_uri.split('track:')[1]), user)
+            .then((track) => {
+              _master.album_cover = track.album.images[0].url;
+              roomService.updateMaster(roomId, _master);
+              /* get the new tracks cover image and set the master to the new track that is taking over
+              then set the system message buffer to send update info to the client */
+              sendMessage(JSON.stringify({
+                type: constants.TRACK_CHANGE,
+                message: defaultNameCheck(_master.selector_name) + ' ' + constants.SELECTOR_CALLS[Math.floor(Math.random() * constants.SELECTOR_CALLS.length)] + ' ' + _master.track_name + '!!',
+                user_object: user,
+                master_object: _master,
+                roomId: roomId
+              }));
+              /* remove the current user from the reference to the array of users
+              and then run through all the remaining users setting their track details to master */
+              _allRoomUsers.splice(_allRoomUsers.indexOf(user), 1);
+              // console.log(' and now all users to send sync to are ', _allRoomUsers);
+              resync(_allRoomUsers, _master);
+              return true;
+            });
         })
         .catch(e => console.log('Error in sync to master ', e));
     });
@@ -269,7 +281,9 @@ const resync = (allUsers, master) => {
 
 // polling loop at 350ms
 const pollUsersPlayback = () => {
+  console.log('POLL USERS');
   setInterval(() => {
+    console.log('SET INTERVAL');
     let rooms = roomService.getAllRooms();
     rooms.forEach(
       (room) => {
@@ -304,50 +318,78 @@ const checkCurrentTrack = (user) => {
 // START SERVER AND SOCKET
 const app = express()
   .use('/', router)
-  .listen(config.SERVER_PORT, () => console.log(`Listening on ${config.SERVER_PORT}`));
+  .listen(config.SERVER_PORT, () => console.log('Listening on ' + config.SERVER_PORT));
 
 // CONNECT TO WEBSOCKET THROUGH wss://<app-name>.herokuapp.com:443/socket
 wss = new SocketServer({ server: app, path: "/socket" });
 
 wss.on('connection', function connection(ws) {
-  ws.on('message', function (messageData) {
-    if (JSON.parse(messageData) !== '.') {
-      console.log('got message', JSON.parse(messageData));
-      console.log('Connections: ',wss._eventsCount);
+  ws.on('message', function (jsonData) {
+    console.log('Got client message with json:', jsonData);
+    var msgData = JSON.parse(jsonData);
+    if (msgData.type === undefined) {
+        console.log('Message data has no type');
+        return false;
     }
-    var message = JSON.parse(messageData);
-    switch (message.type) {
-      case MESSAGE:
+    console.log('Got client message with data:', msgData);
+    console.log('Connections: ', wss._eventsCount);
+
+    switch (msgData.type) {
+
+      case constants.MESSAGE:
         sendMessage(JSON.stringify({
-          type: 'message',
-          userName: message.userName || 'DJ Unknown',
+          type: constants.MESSAGE,
+          userName: defaultNameCheck(msgData.userName),
           master_object: master,
-          message: message.message,
-          roomId: message.roomId
-        })); break;
-      case PLAYBACK:
-        if (message.message === "play_new") {
-          SpotifyService.rpSafe(SpotifyService.setPlaybackOptions(message, message, 0), roomService.getUserFromId(message.roomId, message.userId))
-            .catch(e => console.log(e.message));
-        } else if (message.message === "pause") {
-          SpotifyService.rpSafe(SpotifyService.setPause(message), roomService.getUserFromId(message.roomId, message.userId))
-            .catch(e => console.log(e.message));
-        } else if (message.message === "play") {
-          SpotifyService.rpSafe(SpotifyService.setPlay(message), roomService.getUserFromId(message.roomId, message.userId))
-            .catch(e => console.log(e.message));
-        } break;
-      case SOUND_FX:
-        sendMessage(JSON.stringify({
-          type: SOUND_FX, message: `${message.userName} ${message.message}`, sample: message.sample,
-          roomId: message.roomId, category: message.category
+          message: msgData.message,
+          roomId: msgData.roomId
         }));
-        break;
-      case CLOSE: roomService.removeUser(message.roomId, message.userId);
-          SpotifyService.rpSafe(SpotifyService.setPause(message), roomService.getUserFromId(message.roomId, message.userId))
+      break;
+
+      case constants.SOUND_FX:
+        sendMessage(JSON.stringify({
+          type: constants.SOUND_FX,
+          message: msgData.userName + ' ' + msgData.message,
+          sample: msgData.sample,
+          roomId: msgData.roomId,
+          category: msgData.category
+        }));
+      break;
+
+      case constants.PLAYBACK:
+        var user = roomService.getUserFromId(msgData.roomId, msgData.userId);
+        switch (msgData.message) {
+          case constants.PLAY_NEW:
+            SpotifyService.rpSafe(SpotifyService.setPlaybackOptions(msgData, msgData, 0), user)
+              .catch(e => console.log(e.message));
+          break;
+
+          case constants.PAUSE:
+            SpotifyService.rpSafe(SpotifyService.setPause(msgData), user)
+              .catch(e => console.log(e.message));
+          break;
+
+          case constants.PLAY:
+            SpotifyService.rpSafe(SpotifyService.setPlay(msgData), user)
+              .catch(e => console.log(e.message));
+          break;
+        }
+      break;
+
+      case constants.CLOSE:
+        var user = roomService.getUserFromId(msgData.roomId, msgData.userId);
+        SpotifyService.rpSafe(SpotifyService.setPause(msgData), user)
           .catch(e => console.log(e.message));
-        sendMessage(JSON.stringify({ type: CONNECTION, message: `${message.userName} left the room.`, roomId: message.roomId }));
-        break;
-      default: break;
+        roomService.removeUser(msgData.roomId, msgData.userId);
+        sendMessage(JSON.stringify({
+          type: constants.CONNECTION,
+          message: msgData.userName + ' left the room.',
+          roomId: msgData.roomId
+        }));
+      break;
+
+      default:
+      break;
     }
   });
 });
