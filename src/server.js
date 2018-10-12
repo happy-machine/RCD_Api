@@ -108,7 +108,6 @@ router.get('/callback', function (req, res) {
               roomService.createRoom({ roomId: roomId, host: host });
               res.redirect(URLfactory('hostLoggedIn?' + querystring.stringify({ token: host.token, roomId: roomId, userName: host.name, userId: host.id })));
               sendMessage(makeBuffer(`${defaultNameCheck(host.name)} stepped up to the 1210s..`, host, {}, CONNECTION, roomId));
-              pollUsersPlayback();
             })
             .catch(e => {
               res.redirect(URLfactory(e.error.error.message, ERROR));
@@ -352,6 +351,8 @@ wss.on('connection', function connection(ws) {
     }
   });
 });
+
+pollUsersPlayback();
 
 export const sendMessage = (message) => {
   wss.clients.forEach((client) => {
