@@ -132,7 +132,7 @@ router.get('/callback', function (req, res) {
           }));
         })
         .catch(e => {
-          console.log('Getting user devices ', e);
+          console.log('Getting host devices ', e);
           res.redirect(URLfactory(e, constants.ERROR));
         });
       })
@@ -167,38 +167,51 @@ router.get('/guestcallback', function (req, res) {
     newUser.token = body.access_token;
     newUser.refresh_token = body.refresh_token
     newUser.token_expiry = makeTokenExpiry(body.expires_in)
-    SpotifyService.rpSafe((SpotifyService.getUserOptions(newUser)), newUser)
-      .then(user_details => {
-        console.log(user_details.display_name + ' trying to join.');
-        newUser.name = user_details.display_name;
-        newUser.id = user_details.id;
-        return checkCurrentTrack(_room.host);
-      })
-      .then(_currentTrack => {
-        return SpotifyService.rpSafe(SpotifyService.setPlaybackOptions(newUser, _currentTrack, config.PLAYBACK_DELAY), newUser);
-      })
-      .then(() => {
-        // Check user isn't already in the room
-        if (!roomService.userInRoom(roomId, newUser.id)) {
-          roomService.addUserToRoom(roomId, newUser);
-          var message = defaultNameCheck(newUser.name) + ' joined the party...';
-        } else {
-          //User is rejoining so update token just incase it changed
-          roomService.updateUserToRoom(roomId, newUser);
-          var message = defaultNameCheck(newUser.name) + ' rejoined the party...';
+
+    SpotifyService.rpSafe(SpotifyService.getUserDevices(newUser), newUser)
+      .then((user_devices) => {
+        if (!user_devices.devices.length) {
+          res.redirect(URLfactory('please open spotify in one of your devices and try again', constants.ERROR));
+          return false;
         }
-        sendMessage(JSON.stringify({
-          type: constants.CONNECTION,
-          message: message,
-          user_object: newUser,
-          master_object: _room.master,
-          roomId: roomId
-        }));
-        res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name, userId: newUser.id })));
+
+        SpotifyService.rpSafe((SpotifyService.getUserOptions(newUser)), newUser)
+          .then(user_details => {
+            console.log(user_details.display_name + ' trying to join.');
+            newUser.name = user_details.display_name;
+            newUser.id = user_details.id;
+            return checkCurrentTrack(_room.host);
+          })
+          .then(_currentTrack => {
+            return SpotifyService.rpSafe(SpotifyService.setPlaybackOptions(newUser, _currentTrack, config.PLAYBACK_DELAY), newUser);
+          })
+          .then(() => {
+            // Check user isn't already in the room
+            if (!roomService.userInRoom(roomId, newUser.id)) {
+              roomService.addUserToRoom(roomId, newUser);
+              var message = defaultNameCheck(newUser.name) + ' joined the party...';
+            } else {
+              //User is rejoining so update token just incase it changed
+              roomService.updateUserToRoom(roomId, newUser);
+              var message = defaultNameCheck(newUser.name) + ' rejoined the party...';
+            }
+            sendMessage(JSON.stringify({
+              type: constants.CONNECTION,
+              message: message,
+              user_object: newUser,
+              master_object: _room.master,
+              roomId: roomId
+            }));
+            res.redirect(URLfactory('guestLoggedIn?' + querystring.stringify({ token: newUser.token, roomId: roomId, userName: newUser.name, userId: newUser.id })));
+          })
+          .catch(e => {
+            res.redirect(URLfactory(e.error.error.message + JSON.stringify(', Check you have a premium account and your Spotify app is open.'), constants.ERROR));
+            console.log('Error in guest sync ', e);
+          });
       })
       .catch(e => {
-        res.redirect(URLfactory(e.error.error.message + JSON.stringify(', Check you have a premium account and your Spotify app is open.'), constants.ERROR));
-        console.log('Error in guest sync ', e);
+        console.log('Getting user devices ', e);
+        res.redirect(URLfactory(e, constants.ERROR));
       });
   });
 });
