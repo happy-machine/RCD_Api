@@ -2,9 +2,7 @@
 
 ## What's RCD?
 
-An open source project curated by DJ Fresh (Happy-Machine) to create a cutting edge medium for music discussion and collaboration.
-
-The first stage is to build a fun webapp that allows people invited to a room to sync their spotify playback. The accounts will remain synced until a user logs out. You can either control track selection from the input box which will search the spotify api for tracks, or from spotify itself, so this can be used without the accompanying UI.
+RCD is ga fun webapp that allows people invited to a room to sync their spotify playback. The accounts will remain synced until a user logs out. You can either control track selection from the input box which will search the spotify api for tracks, or from spotify itself, so this can be used without the accompanying UI.
 
 You can use the toolbar to copy an invite link to clipboard or open a persistant mini modal that will display the latest chat message and still give you control over realtime effects and track control in the background while you work
 
