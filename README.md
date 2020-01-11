@@ -2,11 +2,10 @@
 
 ## What's RCD?
 
-RCD is a fun web-app that allows people invited to a room to sync their spotify playback. The accounts will remain synced until a user logs out. You can either control track selection from the input box which will search the spotify api for tracks, or from spotify itself, so this can be used without the accompanying UI.
+RCD is a fun web-app that allows people invited to a room to sync their spotify playback. The accounts will remain synced until a user logs out. You can either control track selection from the input box which will search the spotify api for tracks, or from spotify itself. (While connected this is effectively headless and will sync to Spotify state as controlled by any linked spotify player)
 
-You can use the toolbar to copy an invite link to clipboard or open a persistant mini modal that will display the latest chat message and still give you control over realtime effects and track control in the background while you work
+You can use the toolbar to copy an invite link to clipboard or open a persistant mini modal that will display the latest chat messages and give you control over realtime effects and track control in the background while you work
 
-We have only tested with six people in a room at this point!
 
 ## Getting started
 
