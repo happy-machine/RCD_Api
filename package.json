@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "dependencies": {
-    "ajv": "^6.5.2",
+    "ajv": "^6.12.3",
     "axios": "^0.18.0",
     "body-parser": "^1.18.3",
     "connect": "^3.6.6",
